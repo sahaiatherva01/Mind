@@ -1,0 +1,38 @@
+# Environments & Dependencies
+.venv/
+env/
+venv/
+node_modules/
+.venv
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local databases & storage
+*.sqlite3
+*.db
+local_storage/
+
+# Build artifacts
+frontend/dist/
+dist/
+build/
+*.egg-info/
+
+# Environment files
+.env
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test reports
+playwright-report/
+test-results/
