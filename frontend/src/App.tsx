@@ -15,9 +15,14 @@ import { TeacherDashboard } from './pages/teacher/TeacherDashboard';
 import { TeacherClasses } from './pages/teacher/TeacherClasses';
 import { AIStudio } from './pages/teacher/AIStudio';
 import { AssessmentEditor } from './pages/teacher/AssessmentEditor';
+import { TeacherAssessments } from './pages/teacher/TeacherAssessments';
+import { TeacherEvaluationQueue } from './pages/teacher/TeacherEvaluationQueue';
 
 // Student Pages
 import { StudentDashboard } from './pages/student/StudentDashboard';
+import { StudentUpcomingTests } from './pages/student/StudentUpcomingTests';
+import { AssessmentPlayer } from './pages/student/AssessmentPlayer';
+import { StudentResults } from './pages/student/StudentResults';
 
 // Common Placeholder
 import { PlaceholderPage } from './pages/common/PlaceholderPage';
@@ -148,11 +153,7 @@ export const App: React.FC = () => {
               path="/teacher/assessments"
               element={
                 <ProtectedRoute allowedRoles={['teacher', 'admin']}>
-                  <PlaceholderPage
-                    title="Assessment Lifecycle & Publishing"
-                    description="Draft versioning, teacher approval, publication scheduling, and audience assignments."
-                    phase="Phase 3"
-                  />
+                  <TeacherAssessments />
                 </ProtectedRoute>
               }
             />
@@ -160,11 +161,7 @@ export const App: React.FC = () => {
               path="/teacher/evaluations"
               element={
                 <ProtectedRoute allowedRoles={['teacher', 'admin']}>
-                  <PlaceholderPage
-                    title="Evaluation & Marking Queue"
-                    description="Objective auto-score auditing, teacher subjective marking, and controlled result release."
-                    phase="Phase 3"
-                  />
+                  <TeacherEvaluationQueue />
                 </ProtectedRoute>
               }
             />
@@ -194,11 +191,15 @@ export const App: React.FC = () => {
               path="/student/assessments"
               element={
                 <ProtectedRoute allowedRoles={['student']}>
-                  <PlaceholderPage
-                    title="Assigned Tests & Worksheets"
-                    description="Assessment attempt player, live countdown timer, and resilient background autosave."
-                    phase="Phase 3"
-                  />
+                  <StudentUpcomingTests />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/player/:assessmentId"
+              element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <AssessmentPlayer />
                 </ProtectedRoute>
               }
             />
@@ -206,11 +207,7 @@ export const App: React.FC = () => {
               path="/student/results"
               element={
                 <ProtectedRoute allowedRoles={['student']}>
-                  <PlaceholderPage
-                    title="Released Results & Model Solutions"
-                    description="Score breakdown, question rationales, and teacher feedback (visible only after release)."
-                    phase="Phase 3"
-                  />
+                  <StudentResults />
                 </ProtectedRoute>
               }
             />
