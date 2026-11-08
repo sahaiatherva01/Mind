@@ -76,6 +76,7 @@ async def test_role_boundary_enforcement(client: AsyncClient, seeded_test_data):
             "section_id": seeded_test_data["sec_11e"].id,
             "subject_id": seeded_test_data["sub_math"].id,
             "chapter": "Hacking",
+            "topics": ["Exploit"],
             "question_count": 1,
             "total_marks": 5,
         },
@@ -109,6 +110,7 @@ async def test_teacher_approval_gate_enforcement(client: AsyncClient, seeded_tes
             "section_id": section_id,
             "subject_id": subject_id,
             "chapter": "Probability",
+            "topics": ["Independent Events"],
             "question_count": 1,
             "total_marks": 5,
         },
@@ -140,24 +142,25 @@ async def test_teacher_approval_gate_enforcement(client: AsyncClient, seeded_tes
 async def test_strict_teacher_scope_enforcement(client: AsyncClient, seeded_test_data):
     """
     Non-Negotiable #5: Teacher sees and acts ONLY on assigned Class + Section + Subject combinations.
-    Teacher 1 is assigned to Class 11 Math. Attempting to author or view Class 12 Biology must fail.
+    Teacher 1 is assigned to Class 11 Math and Class 12A Math, but NOT 12D Math or Physics.
     """
     teacher_token = await get_token(client, "teacher1@school1.org", "TeacherPass123!")
     teacher_headers = {"Authorization": f"Bearer {teacher_token}"}
 
-    # Class 12 and unassigned subject
+    # Class 12D is NOT assigned to Teacher 1
     unassigned_class_id = seeded_test_data["class_12"].id
-    unassigned_sec_id = seeded_test_data["sec_12a"].id
-    unassigned_subject_id = seeded_test_data["sub_bio"].id
+    unassigned_sec_id = seeded_test_data["sec_12d"].id
+    subject_id = seeded_test_data["sub_math"].id
 
-    # Attempt to generate quiz for unassigned workspace
+    # Attempt to generate quiz for unassigned section 12D
     unauth_gen = await client.post(
         "/api/v1/generation/quizzes",
         json={
             "class_id": unassigned_class_id,
             "section_id": unassigned_sec_id,
-            "subject_id": unassigned_subject_id,
-            "chapter": "Genetics",
+            "subject_id": subject_id,
+            "chapter": "Calculus",
+            "topics": ["Limits"],
             "question_count": 2,
             "total_marks": 10,
         },

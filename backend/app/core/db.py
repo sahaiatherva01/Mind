@@ -71,3 +71,15 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await session.close()
 
+
+# Ensure all domain models are loaded into SQLAlchemy's class registry
+def _load_all_models():
+    import backend.app.tenancy.models  # noqa: F401
+    import backend.app.identity.models  # noqa: F401
+    import backend.app.academics.models  # noqa: F401
+    import backend.app.content.models  # noqa: F401
+    import backend.app.assessments.models  # noqa: F401
+    import backend.app.audit.models  # noqa: F401
+
+_load_all_models()
+
