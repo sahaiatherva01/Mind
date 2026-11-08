@@ -1,0 +1,167 @@
+"""
+Pytest Fixtures for Backend Test Suite
+"""
+import pytest
+import pytest_asyncio
+from typing import AsyncGenerator
+from httpx import AsyncClient, ASGITransport
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+
+from backend.app.core.config import settings
+from backend.app.core.db import Base, get_db
+from backend.app.core.security import hash_password
+from backend.app.main import app
+
+# Test database engine using an in-memory SQLite database
+TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
+test_engine = create_async_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
+TestSessionLocal = async_sessionmaker(test_engine, expire_on_commit=False, class_=AsyncSession)
+
+
+@pytest_asyncio.fixture(scope="function")
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    async with TestSessionLocal() as session:
+        yield session
+
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest_asyncio.fixture(scope="function")
+async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    async def override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
+        yield ac
+
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def seeded_test_data(db_session: AsyncSession):
+    from datetime import date
+    from backend.app.tenancy.models import School, AcademicYear
+    from backend.app.identity.models import User
+    from backend.app.academics.models import Class, Section, Subject, TeacherAssignment, StudentEnrollment
+
+    # School 1 (Primary)
+    school1 = School(name="Springfield Academy", slug="springfield", timezone="Asia/Kolkata")
+    # School 2 (Second Tenant for Cross-Tenant tests)
+    school2 = School(name="Shelbyville High", slug="shelbyville", timezone="Asia/Kolkata")
+    db_session.add_all([school1, school2])
+    await db_session.flush()
+
+    # Academic Year
+    year1 = AcademicYear(school_id=school1.id, label="2026-2027", starts_on=date(2026, 4, 1), ends_on=date(2027, 3, 31), status="active")
+    year2 = AcademicYear(school_id=school2.id, label="2026-2027", starts_on=date(2026, 4, 1), ends_on=date(2027, 3, 31), status="active")
+    db_session.add_all([year1, year2])
+    await db_session.flush()
+
+    # Users for School 1
+    admin1 = User(
+        school_id=school1.id,
+        email="admin@school1.org",
+        password_hash=hash_password("AdminPass123!"),
+        full_name="Admin One",
+        role="admin",
+        status="active"
+    )
+    teacher1 = User(
+        school_id=school1.id,
+        email="teacher1@school1.org",
+        password_hash=hash_password("TeacherPass123!"),
+        full_name="Maths Teacher",
+        role="teacher",
+        status="active"
+    )
+    student1 = User(
+        school_id=school1.id,
+        email="student1@school1.org",
+        password_hash=hash_password("StudentPass123!"),
+        full_name="Student One",
+        role="student",
+        status="active"
+    )
+
+    # Users for School 2
+    admin2 = User(
+        school_id=school2.id,
+        email="admin@school2.org",
+        password_hash=hash_password("AdminPass123!"),
+        full_name="Admin Two",
+        role="admin",
+        status="active"
+    )
+
+    db_session.add_all([admin1, teacher1, student1, admin2])
+    await db_session.flush()
+
+    # Academics for School 1
+    class_11 = Class(school_id=school1.id, academic_year_id=year1.id, name="Class 11")
+    class_12 = Class(school_id=school1.id, academic_year_id=year1.id, name="Class 12")
+    db_session.add_all([class_11, class_12])
+    await db_session.flush()
+
+    sec_11e = Section(class_id=class_11.id, name="E")
+    sec_12a = Section(class_id=class_12.id, name="A")
+    sec_12d = Section(class_id=class_12.id, name="D")
+    db_session.add_all([sec_11e, sec_12a, sec_12d])
+    await db_session.flush()
+
+    sub_math = Subject(school_id=school1.id, name="Mathematics", code="MATH")
+    sub_phy = Subject(school_id=school1.id, name="Physics", code="PHY")
+    db_session.add_all([sub_math, sub_phy])
+    await db_session.flush()
+
+    # Assign Teacher1 to 11E (MATH) and 12A (MATH), but NOT 12D
+    asgn_11e = TeacherAssignment(
+        school_id=school1.id,
+        teacher_id=teacher1.id,
+        class_id=class_11.id,
+        section_id=sec_11e.id,
+        subject_id=sub_math.id
+    )
+    asgn_12a = TeacherAssignment(
+        school_id=school1.id,
+        teacher_id=teacher1.id,
+        class_id=class_12.id,
+        section_id=sec_12a.id,
+        subject_id=sub_math.id
+    )
+    db_session.add_all([asgn_11e, asgn_12a])
+
+    # Enroll Student1 in 11E
+    enroll1 = StudentEnrollment(
+        school_id=school1.id,
+        student_id=student1.id,
+        class_id=class_11.id,
+        section_id=sec_11e.id,
+        roll_number="11E-01",
+        status="active"
+    )
+    db_session.add(enroll1)
+
+    await db_session.commit()
+
+    return {
+        "school1": school1,
+        "school2": school2,
+        "admin1": admin1,
+        "teacher1": teacher1,
+        "student1": student1,
+        "admin2": admin2,
+        "class_11": class_11,
+        "class_12": class_12,
+        "sec_11e": sec_11e,
+        "sec_12a": sec_12a,
+        "sec_12d": sec_12d,
+        "sub_math": sub_math,
+        "sub_phy": sub_phy,
+    }

@@ -3,15 +3,19 @@ Identity Schemas: Authentication, Users, and Me Endpoints
 """
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+EMAIL_PATTERN = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(..., pattern=EMAIL_PATTERN)
     password: str = Field(..., min_length=6)
 
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     school_id: str
     email: str
@@ -21,9 +25,6 @@ class UserResponse(BaseModel):
     status: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class LoginResponse(BaseModel):
     user: UserResponse
@@ -32,7 +33,7 @@ class LoginResponse(BaseModel):
 
 
 class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(..., pattern=EMAIL_PATTERN)
 
 
 class ForgotPasswordResponse(BaseModel):
@@ -46,7 +47,7 @@ class ResetPasswordRequest(BaseModel):
 
 
 class UserCreateRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(..., pattern=EMAIL_PATTERN)
     password: str = Field(..., min_length=8)
     full_name: str = Field(..., min_length=2)
     role: str = Field(..., pattern="^(admin|teacher|student)$")
@@ -60,13 +61,12 @@ class UserUpdateRequest(BaseModel):
 
 
 class SchoolSummaryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     name: str
     slug: str
     timezone: str
-
-    class Config:
-        from_attributes = True
 
 
 class MeResponse(BaseModel):

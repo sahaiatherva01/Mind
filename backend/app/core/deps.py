@@ -17,15 +17,18 @@ async def get_current_session_token(
     request: Request,
     authorization: Optional[str] = Header(None),
 ) -> Optional[str]:
-    """Extracts session token from HttpOnly cookie or Authorization: Bearer <token> header."""
-    # 1. Check session cookie
+    """
+    Extracts session token from Authorization: Bearer <token> header or HttpOnly cookie.
+    Explicit Authorization header takes precedence.
+    """
+    # 1. Check Authorization Bearer header first
+    if authorization and authorization.startswith("Bearer "):
+        return authorization.split(" ", 1)[1].strip()
+
+    # 2. Fallback to session cookie
     cookie_token = request.cookies.get(settings.SESSION_COOKIE_NAME)
     if cookie_token:
         return cookie_token
-
-    # 2. Check Authorization Bearer header
-    if authorization and authorization.startswith("Bearer "):
-        return authorization.split(" ", 1)[1].strip()
 
     return None
 

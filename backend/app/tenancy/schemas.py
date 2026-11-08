@@ -3,7 +3,7 @@ Tenancy Schemas: Schools and Academic Years
 """
 from datetime import date, datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SchoolCreateRequest(BaseModel):
@@ -14,15 +14,14 @@ class SchoolCreateRequest(BaseModel):
 
 
 class SchoolResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     name: str
     slug: str
     timezone: str
     settings: Optional[Dict[str, Any]] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class AcademicYearCreateRequest(BaseModel):
@@ -33,6 +32,8 @@ class AcademicYearCreateRequest(BaseModel):
 
 
 class AcademicYearResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     school_id: str
     label: str
@@ -40,6 +41,3 @@ class AcademicYearResponse(BaseModel):
     ends_on: date
     status: str
     created_at: datetime
-
-    class Config:
-        from_attributes = True

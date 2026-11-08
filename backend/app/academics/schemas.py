@@ -3,7 +3,7 @@ Academic Schemas: Classes, Sections, Subjects, Assignments, Enrollments, Curricu
 """
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SectionCreateRequest(BaseModel):
@@ -11,13 +11,12 @@ class SectionCreateRequest(BaseModel):
 
 
 class SectionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     class_id: str
     name: str
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class ClassCreateRequest(BaseModel):
@@ -27,15 +26,14 @@ class ClassCreateRequest(BaseModel):
 
 
 class ClassResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     school_id: str
     academic_year_id: str
     name: str
     sections: List[SectionResponse] = []
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class SubjectCreateRequest(BaseModel):
@@ -44,14 +42,13 @@ class SubjectCreateRequest(BaseModel):
 
 
 class SubjectResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     school_id: str
     name: str
     code: str
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class TeacherAssignmentCreateRequest(BaseModel):
@@ -62,6 +59,8 @@ class TeacherAssignmentCreateRequest(BaseModel):
 
 
 class TeacherAssignmentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     school_id: str
     teacher_id: str
@@ -74,9 +73,6 @@ class TeacherAssignmentResponse(BaseModel):
     subject_name: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class StudentEnrollmentCreateRequest(BaseModel):
     student_id: str
@@ -86,6 +82,8 @@ class StudentEnrollmentCreateRequest(BaseModel):
 
 
 class StudentEnrollmentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     school_id: str
     student_id: str
@@ -97,9 +95,6 @@ class StudentEnrollmentResponse(BaseModel):
     class_name: Optional[str] = None
     section_name: Optional[str] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class CurriculumNodeCreateRequest(BaseModel):
@@ -113,6 +108,8 @@ class CurriculumNodeCreateRequest(BaseModel):
 
 
 class CurriculumNodeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     school_id: str
     subject_id: str
@@ -123,9 +120,6 @@ class CurriculumNodeResponse(BaseModel):
     learning_outcome: Optional[str] = None
     source_ref: Optional[str] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class BulkImportRowError(BaseModel):
