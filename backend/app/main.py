@@ -22,6 +22,8 @@ from backend.app.academics.router import (
     academics_router,
 )
 from backend.app.audit.router import router as audit_router
+from backend.app.generation.router import router as generation_router
+from backend.app.assessments.router import router as assessments_router
 
 logger = get_logger("mind.main")
 
@@ -72,6 +74,8 @@ app.include_router(enrollments_router, prefix=api_v1_prefix)
 app.include_router(curriculum_router, prefix=api_v1_prefix)
 app.include_router(academics_router, prefix=api_v1_prefix)
 app.include_router(audit_router, prefix=api_v1_prefix)
+app.include_router(generation_router, prefix=api_v1_prefix)
+app.include_router(assessments_router, prefix=api_v1_prefix)
 
 
 @app.get("/health", tags=["Health"])

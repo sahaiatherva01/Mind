@@ -13,6 +13,8 @@ import { AuditLogs } from './pages/admin/AuditLogs';
 // Teacher Pages
 import { TeacherDashboard } from './pages/teacher/TeacherDashboard';
 import { TeacherClasses } from './pages/teacher/TeacherClasses';
+import { AIStudio } from './pages/teacher/AIStudio';
+import { AssessmentEditor } from './pages/teacher/AssessmentEditor';
 
 // Student Pages
 import { StudentDashboard } from './pages/student/StudentDashboard';
@@ -130,11 +132,15 @@ export const App: React.FC = () => {
               path="/teacher/ai-studio"
               element={
                 <ProtectedRoute allowedRoles={['teacher', 'admin']}>
-                  <PlaceholderPage
-                    title="AI Content Studio"
-                    description="Worksheet, Quiz, Question Paper & Custom Question Generators with 40 ICSE/ISC Board Exam Question Types."
-                    phase="Phase 2"
-                  />
+                  <AIStudio />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/assessments/:assessmentId"
+              element={
+                <ProtectedRoute allowedRoles={['teacher', 'admin']}>
+                  <AssessmentEditor />
                 </ProtectedRoute>
               }
             />

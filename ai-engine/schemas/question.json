@@ -1,0 +1,271 @@
+{
+  "$defs": {
+    "MatchPair": {
+      "properties": {
+        "left": {
+          "title": "Left",
+          "type": "string"
+        },
+        "right": {
+          "title": "Right",
+          "type": "string"
+        }
+      },
+      "required": [
+        "left",
+        "right"
+      ],
+      "title": "MatchPair",
+      "type": "object"
+    },
+    "QuestionOption": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "title": "QuestionOption",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "category": {
+      "enum": [
+        "objective",
+        "written",
+        "visual_mathematical",
+        "application_analytical",
+        "computer_science"
+      ],
+      "title": "Category",
+      "type": "string"
+    },
+    "type": {
+      "enum": [
+        "mcq",
+        "multiple_select",
+        "fill_in_the_blanks",
+        "true_false",
+        "match_the_following",
+        "assertion_reason",
+        "very_short_answer",
+        "short_answer",
+        "medium_answer",
+        "long_answer",
+        "definition_based",
+        "difference_based",
+        "reasoning_based",
+        "proof_derivation_based",
+        "diagram_based",
+        "label_the_diagram",
+        "graph_based",
+        "table_based",
+        "chart_based",
+        "map_based",
+        "construction_based",
+        "numerical_based",
+        "formula_based",
+        "case_based",
+        "passage_based",
+        "source_based",
+        "data_interpretation",
+        "application_based",
+        "hots",
+        "critical_thinking",
+        "problem_solving",
+        "experiment_based",
+        "output_prediction",
+        "theory_coding",
+        "code_completion",
+        "error_detection",
+        "debugging",
+        "dry_run",
+        "algorithm_writing",
+        "program_writing",
+        "data_structure_implementation"
+      ],
+      "title": "Type",
+      "type": "string"
+    },
+    "prompt": {
+      "title": "Prompt",
+      "type": "string"
+    },
+    "marks": {
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Marks",
+      "type": "integer"
+    },
+    "difficulty": {
+      "default": "medium",
+      "enum": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "title": "Difficulty",
+      "type": "string"
+    },
+    "topic_tags": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Topic Tags",
+      "type": "array"
+    },
+    "options": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/QuestionOption"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Options"
+    },
+    "match_pairs": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/MatchPair"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Match Pairs"
+    },
+    "passage_or_case_text": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Passage Or Case Text"
+    },
+    "code_snippet": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Code Snippet"
+    },
+    "diagram_description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Diagram Description"
+    },
+    "expected_answer": {
+      "title": "Expected Answer",
+      "type": "string"
+    },
+    "answer_keys": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Answer Keys"
+    },
+    "marking_scheme": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Marking Scheme"
+    },
+    "rationale": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rationale"
+    },
+    "flagged_uncertain": {
+      "default": false,
+      "title": "Flagged Uncertain",
+      "type": "boolean"
+    },
+    "status": {
+      "default": "draft",
+      "enum": [
+        "draft",
+        "approved",
+        "archived"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "version": {
+      "default": 1,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "id",
+    "category",
+    "type",
+    "prompt",
+    "marks",
+    "expected_answer"
+  ],
+  "title": "CanonicalQuestion",
+  "type": "object"
+}
