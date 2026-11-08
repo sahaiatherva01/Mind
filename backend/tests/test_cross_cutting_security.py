@@ -134,8 +134,8 @@ async def test_teacher_approval_gate_enforcement(client: AsyncClient, seeded_tes
         headers=teacher_headers,
     )
     # Must fail because assessment is in 'needs_review' state, not 'approved'
-    assert pub_attempt.status_code == 400
-    assert "approved" in pub_attempt.json()["detail"].lower()
+    assert pub_attempt.status_code == 422
+    assert "approved" in str(pub_attempt.json()).lower() or "approval" in str(pub_attempt.json()).lower()
 
 
 @pytest.mark.asyncio

@@ -7,8 +7,8 @@ from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.core.db import get_db
-from backend.app.core.deps import get_current_user
-from backend.app.identity.models import User
+from backend.app.core.deps import get_current_user, require_role
+from backend.app.identity.models import User, UserRole
 from backend.app.assessments import lifecycle_service
 
 eval_router = APIRouter(tags=["Evaluation & Publishing"])
@@ -34,7 +34,7 @@ class GradeResponseRequest(BaseModel):
 async def publish_assessment_endpoint(
     assessment_id: str,
     payload: PublishAssessmentRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role([UserRole.TEACHER, UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ):
     assessment = await lifecycle_service.publish_or_schedule_assessment(
@@ -62,7 +62,7 @@ async def publish_assessment_endpoint(
 
 @eval_router.get("/teacher/evaluation-queue")
 async def get_evaluation_queue_endpoint(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role([UserRole.TEACHER, UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ):
     return await lifecycle_service.get_teacher_evaluation_queue(
@@ -74,7 +74,7 @@ async def get_evaluation_queue_endpoint(
 async def grade_response_endpoint(
     response_id: str,
     payload: GradeResponseRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role([UserRole.TEACHER, UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ):
     resp = await lifecycle_service.grade_student_response(
@@ -95,7 +95,7 @@ async def grade_response_endpoint(
 @eval_router.post("/assessments/{assessment_id}/release-results")
 async def release_results_endpoint(
     assessment_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role([UserRole.TEACHER, UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ):
     count = await lifecycle_service.release_assessment_results(
