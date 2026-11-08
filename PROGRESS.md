@@ -13,9 +13,9 @@ Tagline: *Intelligence for Better Learning*
 | **Phase 0** | Discovery & Operational Baselines | **COMPLETED** | Baseline decisions documented in `docs/DECISIONS.md`. |
 | **Phase 1** | Product Foundation (Tenancy, Identity, Academics, Audit, Shells) | **COMPLETED** | Multi-tenant boundary enforced; RBAC and assignment-scoped tests pass (11/11 tests green). |
 | **Phase 2** | AI Content Studio (40 Question Types, AI Gateway, Review/Approval) | **COMPLETED** | Teacher can generate, edit, and approve usable draft (14/14 tests green). |
-| **Phase 3** | Assessment Delivery (Publish, Player, Autosave, Grading, Release) | **IN PROGRESS** | End-to-end authoring to student attempt and evaluation. |
-| **Phase 4** | Analytics & Pilot Hardening (Reports, Exports, Hardening, Audit) | Queued | Zero critical security or data-integrity defects; pilot-ready. |
-| **Phase 5** | Controlled Expansion Notes | Queued | `docs/PHASE5_NOTES.md` completed. |
+| **Phase 3** | Assessment Delivery (Publish, Player, Autosave, Grading, Release) | **COMPLETED** | End-to-end authoring to student attempt and evaluation (16/16 tests green). |
+| **Phase 4** | Analytics & Pilot Hardening (Reports, Exports, Hardening, Audit) | **COMPLETED** | Psychometrics, CSV/PDF exports, and security hardening (17/17 tests green). |
+| **Phase 5** | Controlled Expansion Notes & Compliance Documentation | **COMPLETED** | `docs/PHASE5_NOTES.md`, `docs/LEGAL_AND_PRIVACY_OPEN_ITEMS.md`, `docs/USER_GUIDE.md` complete. |
 
 ---
 
@@ -35,6 +35,13 @@ Tagline: *Intelligence for Better Learning*
 - **Generation Pipelines**: Worksheets, Quizzes, Question Papers, and Custom Question Sets.
 - **Domain Validations**: Mark total auto-balancing, MCQ option completeness, duplicate choice detection, valid answer key matching, and factual uncertainty detection.
 - **Assessment Review & Approval**: State machine transition `needs_review` → `approved`, item reordering, item deletion, and single-item regeneration with teacher feedback.
+- **Assessment Delivery & Idempotent Autosave**: Student-safe player with real-time countdown timer, palette, automatic response autosaving, and idempotent submit.
+- **Evaluation & Grading Queue**: Teacher subjective grading queue with model answer & rubric reference.
+- **Result Release Workflow**: Teacher-controlled result release policy with zero answer-key leakage before release.
+- **Psychometric Diagnostics & Item Analysis**: Item difficulty ($P$-value), item discrimination index ($D$), and score distribution histogram.
+- **Curriculum Gap Analysis**: Aggregates mastery by topic and flags critical gaps (<60%) for remedial practice.
+- **Assessment Exports (FR-18)**: Printable Board-exam HTML/PDF papers (with optional teacher marking scheme) and RFC 4180-compliant CSV gradebook roster.
+- **Legal & Compliance Baseline**: Complete alignment with India's Digital Personal Data Protection Act, 2023 (DPDP Act).
 
 ### Frontend Application
 - **Vite + React + TypeScript + Tailwind CSS**: Responsive, clean academic workspace design.
@@ -46,7 +53,13 @@ Tagline: *Intelligence for Better Learning*
   - `TeacherClasses` showing curriculum modules.
   - `AIStudio`: 4-step progressive disclosure generator wizard with 40-question-type checklist.
   - `AssessmentEditor`: Live draft editor with item reorder, inline prompt/mark edits, single-item regenerate modal, collapsible teacher answer keys, and approval button.
+  - `TeacherAssessments` with publish/schedule modal.
+  - `TeacherEvaluationQueue` with subjective response grading.
+  - `TeacherAnalytics` with item discrimination, score distribution, and topic mastery.
   - `StudentDashboard` with enrolled class details.
+  - `StudentUpcomingTests` with live assessment availability roster.
+  - `AssessmentPlayer` distraction-free test player with timer and autosave.
+  - `StudentResults` score breakdown with teacher feedback.
 - **Clean Build**: `tsc -b && vite build` succeeds with 0 errors in 860ms.
 
 ---

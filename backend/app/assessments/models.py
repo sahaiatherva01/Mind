@@ -13,6 +13,24 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.app.core.db import UUIDBase, TenantMixin
 
 
+class AssessmentStatus:
+    DRAFT = "draft"
+    NEEDS_REVIEW = "needs_review"
+    APPROVED = "approved"
+    SCHEDULED = "scheduled"
+    PUBLISHED = "published"
+    CLOSED = "closed"
+    EVALUATED = "evaluated"
+    RESULTS_RELEASED = "results_released"
+
+
+class AttemptStatus:
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    SUBMITTED = "submitted"
+    TIMED_OUT = "timed_out"
+
+
 class Assessment(UUIDBase, TenantMixin):
     __tablename__ = "assessments"
     __table_args__ = (

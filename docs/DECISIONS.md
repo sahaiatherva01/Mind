@@ -59,3 +59,31 @@ This document records architectural, product, and technical decisions made durin
      - **Computer Science (8):** Output Prediction, Theory + Coding, Code Completion, Error Detection, Debugging, Dry Run, Algorithm Writing, Program Writing, Data Structure Implementation.
    - *Reason:* Covers authentic board exam assessment formats across Science, Mathematics, Humanities, and Computer Science.
    - *Reversible:* Yes (extensible JSON schema).
+
+
+---
+
+## 2026-11-08 — DEC-002: Psychometric Item Diagnostics & Assessment Exports
+
+- **Status:** Approved & Implemented
+- **Context:** FR-15 and FR-18 require teacher visibility into item difficulty, discrimination index, score distribution, and PDF/CSV exports.
+- **Decisions:**
+  1. **Item Discrimination Formula:** Implemented upper quartile vs. lower quartile comparison:
+     $$D = P_{\text{upper}} - P_{\text{lower}}$$
+     Categorized with psychometric guidance: $D \ge 0.40$ (Excellent), $0.20 \le D < 0.40$ (Acceptable/Good), and $D < 0.20$ (Needs Review).
+  2. **Zero Student Leakage on Export:** Printable HTML exam papers strip all answer keys, rationales, and marking schemes by default. The `include_marking_scheme=true` parameter is strictly guarded by server-side role authorization (`Admin` or `Teacher` only); requests by students return `403 Forbidden`.
+  3. **CSV Gradebook Roster:** Generates RFC 4180-compliant CSV containing student names, roll numbers, objective/subjective scores, percentages, and submission timestamps.
+- **Reason:** Provides actionable pedagogical diagnostics while preserving strict security invariants.
+- **Reversible:** Yes.
+
+---
+
+## 2026-11-08 — DEC-003: DPDP Act (India) Alignment & AI Data Minimization
+
+- **Status:** Approved & Documented
+- **Context:** Mind operates in Indian schools with minors (Classes 6–12).
+- **Decisions:**
+  1. **Data Processor Model:** Mind operates as Data Processor; the School is Data Fiduciary. School certifies parental consent before roster import.
+  2. **AI Data Minimization:** Prompts dispatched to external LLMs (Google Gemini) contain zero student personal identifiable information (PII). AI is utilized strictly for curriculum generation and teacher rubric assistance.
+- **Reason:** Mandatory compliance with Section 9 of the Digital Personal Data Protection Act, 2023.
+- **Reversible:** No (statutory requirement).

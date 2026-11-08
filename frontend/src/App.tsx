@@ -17,15 +17,13 @@ import { AIStudio } from './pages/teacher/AIStudio';
 import { AssessmentEditor } from './pages/teacher/AssessmentEditor';
 import { TeacherAssessments } from './pages/teacher/TeacherAssessments';
 import { TeacherEvaluationQueue } from './pages/teacher/TeacherEvaluationQueue';
+import { TeacherAnalytics } from './pages/teacher/TeacherAnalytics';
 
 // Student Pages
 import { StudentDashboard } from './pages/student/StudentDashboard';
 import { StudentUpcomingTests } from './pages/student/StudentUpcomingTests';
 import { AssessmentPlayer } from './pages/student/AssessmentPlayer';
 import { StudentResults } from './pages/student/StudentResults';
-
-// Common Placeholder
-import { PlaceholderPage } from './pages/common/PlaceholderPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({
   children,
@@ -169,11 +167,7 @@ export const App: React.FC = () => {
               path="/teacher/analytics"
               element={
                 <ProtectedRoute allowedRoles={['teacher', 'admin']}>
-                  <PlaceholderPage
-                    title="Academic Performance Analytics"
-                    description="Class-level averages, question discrimination, and topic-level mastery insights."
-                    phase="Phase 4"
-                  />
+                  <TeacherAnalytics />
                 </ProtectedRoute>
               }
             />

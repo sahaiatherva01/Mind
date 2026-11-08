@@ -9,6 +9,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.app.core.db import UUIDBase, TenantMixin
 
 
+class UserRole:
+    ADMIN = "admin"
+    TEACHER = "teacher"
+    STUDENT = "student"
+
+
 class User(UUIDBase, TenantMixin):
     __tablename__ = "users"
     __table_args__ = (

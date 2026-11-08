@@ -128,3 +128,30 @@ async def approve_assessment_endpoint(
     policies.can_manage_assessment(current_user, assessment)
     approved = await service.approve_assessment(db, current_user.school_id, assessment_id, current_user.id)
     return AssessmentResponse.model_validate(approved)
+
+
+from backend.app.assessments.export_service import AssessmentExportService
+
+
+@router.get("/{assessment_id}/export/csv")
+async def export_assessment_csv_endpoint(
+    assessment_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Export student gradebook roster and score breakdown as CSV."""
+    return await AssessmentExportService.export_results_csv(db, current_user, assessment_id)
+
+
+@router.get("/{assessment_id}/export/pdf")
+async def export_assessment_printable_endpoint(
+    assessment_id: str,
+    include_marking_scheme: bool = Query(False),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Export clean Board-exam printable paper with optional teacher marking scheme."""
+    return await AssessmentExportService.export_printable_paper(
+        db, current_user, assessment_id, include_marking_scheme
+    )
+
