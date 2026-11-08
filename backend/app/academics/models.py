@@ -118,3 +118,4 @@ class CurriculumNode(UUIDBase, TenantMixin):
     source_ref: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     subject: Mapped["Subject"] = relationship("Subject")
+

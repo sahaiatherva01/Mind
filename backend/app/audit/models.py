@@ -21,3 +21,4 @@ class AuditEvent(UUIDBase, TenantMixin):
     entity_type: Mapped[str] = mapped_column(String(50), nullable=False)  # 'user', 'assessment', 'class'
     entity_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     metadata_json: Mapped[Optional[dict]] = mapped_column(JSON, default=dict)
+

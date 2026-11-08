@@ -240,3 +240,4 @@ async def test_attempt_limit_enforced(client: AsyncClient, seeded_test_data):
     # Attempt 2 -> Conflict 409
     res_second = await client.post(f"/api/v1/assessments/{asmt_id}/attempts", headers={"Authorization": f"Bearer {student_token}"})
     assert res_second.status_code == 409
+

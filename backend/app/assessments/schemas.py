@@ -68,3 +68,4 @@ class AssessmentUpdateRequest(BaseModel):
 
 class ItemRegenerateRequest(BaseModel):
     feedback: str = Field(..., min_length=2)
+

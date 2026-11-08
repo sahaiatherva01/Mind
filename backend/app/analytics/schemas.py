@@ -69,3 +69,4 @@ class TeacherDashboardSummary(BaseModel):
     active_assessments_count: int
     pending_evaluations_count: int
     total_graded_submissions: int
+

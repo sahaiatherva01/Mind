@@ -18,3 +18,4 @@ def can_manage_academic_setup(user: User) -> bool:
 def can_view_academics(user: User) -> bool:
     # All authenticated users can view basic academic catalogue within their school
     return True
+

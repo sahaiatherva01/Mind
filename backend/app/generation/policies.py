@@ -22,3 +22,4 @@ async def can_generate_for_workspace(
         subject_id=subject_id,
     )
     return True
+

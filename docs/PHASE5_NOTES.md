@@ -65,3 +65,4 @@ Currently, the AI Gateway supports Google Gemini with deterministic `MockAIProvi
 - Cache published assessment payloads in browser IndexedDB.
 - Permit students in rural or unstable network environments to answer questions offline.
 - Cryptographically sign local autosave batches and synchronize them with the server when connectivity resumes.
+

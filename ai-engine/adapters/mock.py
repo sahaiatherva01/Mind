@@ -178,3 +178,4 @@ class MockAIProvider(BaseAIProvider):
         new_q.prompt = f"{existing_question.prompt} [Revised: {feedback}]"
         new_q.version += 1
         return new_q
+

@@ -46,3 +46,4 @@ async def get_audit_events(
     stmt = stmt.order_by(desc(AuditEvent.created_at)).limit(limit)
     result = await db.execute(stmt)
     return list(result.scalars().all())
+

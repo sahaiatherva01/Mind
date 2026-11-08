@@ -23,3 +23,4 @@ def can_view_assessment_draft(user: User, assessment: Assessment) -> bool:
     if user.role in ("admin", "teacher"):
         return True
     raise ForbiddenException("Access denied: Students cannot access unapproved assessment drafts.")
+

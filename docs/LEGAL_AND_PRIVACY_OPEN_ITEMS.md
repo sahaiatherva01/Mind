@@ -69,3 +69,4 @@ The platform provides administrative tools for schools to fulfill student and te
 - **Encryption**: TLS 1.3 in transit; AES-256 for persistent object storage and backups.
 - **Password Security**: Argon2id with unique cryptographic salts.
 - **Incident Response Plan**: In the event of a personal data breach, Mind's automated audit trail enables tracing affected records. Mind will notify the school within 24 hours of confirmation, enabling the school to fulfill the mandatory statutory notification to the Data Protection Board of India.
+

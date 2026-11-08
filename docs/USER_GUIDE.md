@@ -154,3 +154,4 @@ Mind features a 4-step progressive disclosure wizard:
 
 - **Zero Leakage**: Student browser payloads never contain answer keys or teacher metadata before result release.
 - **Support Contact**: For technical incidents or data privacy queries, email `support@mindplatform.edu` or open an issue with the institution administrator.
+

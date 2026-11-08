@@ -85,3 +85,4 @@ class AIGateway:
         feedback: str,
     ) -> CanonicalQuestion:
         return await self.provider.regenerate_single_question(question, feedback)
+

@@ -24,3 +24,4 @@ export const PlaceholderPage: React.FC<Props> = ({ title, description, phase }) 
     </div>
   );
 };
+

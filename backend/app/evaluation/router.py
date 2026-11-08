@@ -109,3 +109,4 @@ async def release_results_endpoint(
         "released_attempts": count,
         "status": "results_released",
     }
+

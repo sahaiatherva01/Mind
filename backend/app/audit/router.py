@@ -33,3 +33,4 @@ async def list_audit_events(
         items=[AuditEventResponse.model_validate(e) for e in events],
         total=len(events),
     )
+

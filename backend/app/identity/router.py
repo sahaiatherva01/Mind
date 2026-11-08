@@ -146,3 +146,4 @@ async def create_user_endpoint(
         actor_id=current_user.id
     )
     return UserResponse.model_validate(new_user)
+

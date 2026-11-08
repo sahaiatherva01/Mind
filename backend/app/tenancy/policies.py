@@ -11,3 +11,4 @@ def can_manage_tenancy(user: User, school_id: str) -> bool:
     if user.role != "admin":
         raise ForbiddenException("Only school administrators can manage academic years and settings")
     return True
+

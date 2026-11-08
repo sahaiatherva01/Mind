@@ -107,3 +107,4 @@ class GeminiProvider(BaseAIProvider):
             parsed["id"] = str(uuid.uuid4())
             parsed["version"] = existing_question.version + 1
             return CanonicalQuestion.model_validate(parsed)
+

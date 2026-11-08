@@ -25,3 +25,4 @@ class GenerationJob(UUIDBase, TenantMixin):
     warnings: Mapped[Optional[list]] = mapped_column(JSON, default=list)
     error_code: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     error_message: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
+

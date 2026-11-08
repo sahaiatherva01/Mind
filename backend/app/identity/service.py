@@ -217,3 +217,4 @@ async def list_school_users(
     stmt = stmt.order_by(User.full_name).limit(limit)
     result = await db.execute(stmt)
     return list(result.scalars().all())
+

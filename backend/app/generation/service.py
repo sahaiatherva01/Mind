@@ -147,3 +147,4 @@ async def cancel_generation_job(db: AsyncSession, school_id: str, job_id: str) -
     job.status = "cancelled"
     await db.flush()
     return job
+

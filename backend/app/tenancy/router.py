@@ -58,3 +58,4 @@ async def create_academic_year(
         actor_id=current_user.id,
     )
     return AcademicYearResponse.model_validate(year)
+

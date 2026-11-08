@@ -24,3 +24,4 @@ class BaseAIProvider(ABC):
     ) -> CanonicalQuestion:
         """Regenerates a single item without losing teacher context."""
         pass
+

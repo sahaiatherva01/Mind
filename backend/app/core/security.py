@@ -35,3 +35,4 @@ def generate_secure_token(nbytes: int = 32) -> str:
 def hash_session_token(token: str) -> str:
     """Hashes session token before database persistence to prevent plaintext session exposure."""
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
+

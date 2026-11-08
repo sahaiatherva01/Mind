@@ -92,3 +92,4 @@ async def create_academic_year(
     )
 
     return year
+

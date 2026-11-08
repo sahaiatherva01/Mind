@@ -124,3 +124,4 @@ class GenerationRequestSpec(BaseModel):
     instructions: Optional[str] = None
     board: str = "ICSE/ISC"
     language: str = "en"
+

@@ -87,3 +87,4 @@ async def can_student_access_class(
     if not enrollment:
         raise ForbiddenException("Student is not enrolled in this class and section")
     return True
+

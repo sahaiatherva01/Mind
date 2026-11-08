@@ -40,3 +40,4 @@ class AcademicYear(UUIDBase, TenantMixin):
     classes: Mapped[List["Class"]] = relationship(  # type: ignore # noqa: F821
         "Class", back_populates="academic_year", cascade="all, delete-orphan"
     )
+

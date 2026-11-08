@@ -40,3 +40,4 @@ class ContentAsset(UUIDBase, TenantMixin):
     content_type: Mapped[str] = mapped_column(String(100), nullable=False)
     file_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
     metadata_json: Mapped[Optional[dict]] = mapped_column(JSON, default=dict)
+

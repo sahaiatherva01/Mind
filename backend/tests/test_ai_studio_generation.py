@@ -160,3 +160,4 @@ async def test_student_cannot_access_unapproved_drafts(client: AsyncClient, seed
         headers={"Authorization": f"Bearer {student_token}"}
     )
     assert res_student.status_code == 403
+
