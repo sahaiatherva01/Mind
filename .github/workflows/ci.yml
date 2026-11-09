@@ -28,6 +28,13 @@ jobs:
         run: |
           ruff check backend ai_engine
 
+      - name: Check Alembic Migrations
+        env:
+          DATABASE_URL: sqlite+aiosqlite:///./ci_migration_test.db
+        run: |
+          alembic upgrade head
+          rm -f ci_migration_test.db
+
       - name: Run Backend Tests
         env:
           DATABASE_URL: sqlite+aiosqlite:///./ci_test.db

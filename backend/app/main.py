@@ -38,9 +38,11 @@ logger = get_logger("mind.main")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing Mind backend application...")
-    # In development / testing, create tables if they do not exist
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Schema lifecycle is managed via Alembic migrations.
+    # In lightweight test suites with an in-memory SQLite database, ensure tables exist.
+    if settings.ENVIRONMENT == "test" and "sqlite" in settings.DATABASE_URL:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
     logger.info("Database initialized successfully.")
     yield
     logger.info("Shutting down Mind backend application...")

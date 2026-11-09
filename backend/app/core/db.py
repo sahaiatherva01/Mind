@@ -78,6 +78,7 @@ def _load_all_models():
     import backend.app.identity.models  # noqa: F401
     import backend.app.academics.models  # noqa: F401
     import backend.app.content.models  # noqa: F401
+    import backend.app.generation.models  # noqa: F401
     import backend.app.assessments.models  # noqa: F401
     import backend.app.audit.models  # noqa: F401
 
