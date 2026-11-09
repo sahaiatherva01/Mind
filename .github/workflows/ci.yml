@@ -9,6 +9,30 @@ on:
 jobs:
   backend-checks:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: mind_ci_user
+          POSTGRES_PASSWORD: mind_ci_password
+          POSTGRES_DB: mind_ci_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -28,16 +52,17 @@ jobs:
         run: |
           ruff check backend ai_engine
 
-      - name: Check Alembic Migrations
+      - name: Check Alembic Migrations on PostgreSQL
         env:
-          DATABASE_URL: sqlite+aiosqlite:///./ci_migration_test.db
+          DATABASE_URL: postgresql+asyncpg://mind_ci_user:mind_ci_password@localhost:5432/mind_ci_db
         run: |
           alembic upgrade head
-          rm -f ci_migration_test.db
 
-      - name: Run Backend Tests
+      - name: Run Backend Tests on PostgreSQL
         env:
-          DATABASE_URL: sqlite+aiosqlite:///./ci_test.db
+          TEST_DATABASE_URL: postgresql+asyncpg://mind_ci_user:mind_ci_password@localhost:5432/mind_ci_db
+          DATABASE_URL: postgresql+asyncpg://mind_ci_user:mind_ci_password@localhost:5432/mind_ci_db
+          REDIS_URL: redis://localhost:6379/0
           AI_PROVIDER: mock
           EMAIL_BACKEND: console
           ENVIRONMENT: test

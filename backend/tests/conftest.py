@@ -15,9 +15,20 @@ from backend.app.core.db import Base, get_db
 from backend.app.core.security import hash_password
 from backend.app.main import app
 
-# Test database engine using an in-memory SQLite database
-TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
-test_engine = create_async_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
+# Test database engine: uses Postgres if TEST_DATABASE_URL or DATABASE_URL specifies postgresql
+TEST_DB_URL = os.getenv("TEST_DATABASE_URL")
+if not TEST_DB_URL:
+    db_env = os.getenv("DATABASE_URL", "")
+    if "postgresql" in db_env:
+        TEST_DB_URL = db_env
+    else:
+        TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
+
+engine_kwargs = {}
+if "sqlite" in TEST_DB_URL:
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+
+test_engine = create_async_engine(TEST_DB_URL, **engine_kwargs)
 TestSessionLocal = async_sessionmaker(test_engine, expire_on_commit=False, class_=AsyncSession)
 
 
