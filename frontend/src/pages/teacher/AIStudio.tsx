@@ -79,6 +79,8 @@ export const AIStudio: React.FC = () => {
   const [instructions, setInstructions] = useState('');
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [jobStatus, setJobStatus] = useState<string | null>(null);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -165,27 +167,52 @@ export const AIStudio: React.FC = () => {
         body: JSON.stringify(payload),
       });
 
+      setActiveJobId(jobRes.job_id);
+      setJobStatus('queued');
+
       // Poll job for completion
       const pollInterval = setInterval(async () => {
         try {
           const job = await apiRequest<any>(`/generation/jobs/${jobRes.job_id}`);
+          setJobStatus(job.status);
           if (job.status === 'succeeded' && job.assessment_id) {
             clearInterval(pollInterval);
             setIsGenerating(false);
+            setActiveJobId(null);
             navigate(`/teacher/assessments/${job.assessment_id}`);
           } else if (job.status === 'failed') {
             clearInterval(pollInterval);
             setIsGenerating(false);
+            setActiveJobId(null);
             setError(job.error_message || 'Generation failed');
+          } else if (job.status === 'cancelled') {
+            clearInterval(pollInterval);
+            setIsGenerating(false);
+            setActiveJobId(null);
+            setError('Generation job was cancelled.');
           }
         } catch {
           clearInterval(pollInterval);
           setIsGenerating(false);
+          setActiveJobId(null);
         }
       }, 1000);
     } catch (err: any) {
       setError(err.message || 'Generation request failed');
       setIsGenerating(false);
+      setActiveJobId(null);
+    }
+  };
+
+  const handleCancelGeneration = async () => {
+    if (!activeJobId) return;
+    try {
+      await apiRequest(`/generation/jobs/${activeJobId}/cancel`, { method: 'POST' });
+      setJobStatus('cancelled');
+      setIsGenerating(false);
+      setActiveJobId(null);
+    } catch (err: any) {
+      console.error('Failed to cancel job', err);
     }
   };
 
@@ -428,17 +455,43 @@ export const AIStudio: React.FC = () => {
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="flex justify-end space-x-3">
+        {/* Action Button & Active Generation Banner */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+          {isGenerating ? (
+            <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-200 text-indigo-900 px-4 py-2.5 rounded-xl text-xs font-medium w-full sm:w-auto">
+              <Sparkles className="w-4 h-4 text-indigo-600 animate-spin flex-shrink-0" />
+              <div>
+                <span>Status: </span>
+                <span className="font-bold uppercase tracking-wider text-indigo-700">
+                  {jobStatus === 'queued' ? 'Queued in Background Queue...' : 'Running: AI Orchestrator...'}
+                </span>
+                <span className="block text-[11px] text-slate-500 mt-0.5">
+                  You can safely leave this tab; your draft will persist automatically.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleCancelGeneration}
+                className="ml-auto px-3 py-1 bg-white border border-rose-200 hover:bg-rose-50 text-rose-700 font-semibold rounded-lg text-xs"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="text-xs text-slate-500">
+              * Generated assessments require explicit teacher review & approval before publishing.
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={isGenerating}
-            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-md transition-all flex items-center disabled:opacity-50"
+            className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-md transition-all flex items-center justify-center disabled:opacity-50"
           >
             {isGenerating ? (
               <>
                 <Sparkles className="w-4 h-4 mr-2 animate-spin" />
-                Generating Draft with AI Gateway...
+                Working in Background...
               </>
             ) : (
               <>

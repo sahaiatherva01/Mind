@@ -71,6 +71,29 @@ services:
       redis:
         condition: service_healthy
 
+  worker:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.backend
+    container_name: mind_worker
+    restart: unless-stopped
+    command: ["arq", "backend.app.generation.worker.WorkerSettings"]
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://mind_user:mind_password@postgres:5432/mind_db
+      - REDIS_URL=redis://redis:6379/0
+      - AI_PROVIDER=mock
+      - ENVIRONMENT=development
+    volumes:
+      - ./backend:/app/backend
+      - ./ai_engine:/app/ai_engine
+      - ./database:/app/database
+      - local_storage:/app/local_storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   frontend:
     build:
       context: ./frontend

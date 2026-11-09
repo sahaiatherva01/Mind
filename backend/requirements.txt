@@ -23,6 +23,7 @@ openpyxl>=3.1.2
 
 # Cache & Background Queue
 redis>=5.0.3
+arq>=0.25.0
 
 # HTTP Client & AI Gateway
 httpx>=0.27.0

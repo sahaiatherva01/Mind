@@ -1,22 +1,37 @@
 """
-Generation Service
-Orchestrates AI Gateway calls, domain validation, assessment draft generation, and job state transitions.
+Generation Service: Orchestrates async job queueing, worker dispatch, cancellation, and retrieval.
 """
+import asyncio
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any, Tuple
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from arq import create_pool
+from arq.connections import RedisSettings, ArqRedis
 
-from ai_engine.adapters.gateway import AIGateway
-from ai_engine.schemas.question import GenerationRequestSpec, CanonicalQuestion
+from ai_engine.schemas.question import GenerationRequestSpec
+from backend.app.core.config import settings
 from backend.app.core.errors import NotFoundException, ValidationException
+from backend.app.core.logging import get_logger
 from backend.app.generation.models import GenerationJob
-from backend.app.assessments.models import Assessment, AssessmentItem
-from backend.app.content.models import Question
-from backend.app.audit.service import record_audit_event
+from backend.app.generation.worker import execute_generation_job
+
+logger = get_logger("mind.generation.service")
+_redis_pool: Optional[ArqRedis] = None
 
 
-gateway = AIGateway()
+async def get_arq_pool() -> Optional[ArqRedis]:
+    global _redis_pool
+    if _redis_pool is None:
+        try:
+            _redis_pool = await asyncio.wait_for(
+                create_pool(RedisSettings.from_dsn(settings.REDIS_URL)),
+                timeout=1.0,
+            )
+        except Exception as e:
+            logger.debug(f"Redis not available for arq queue ({e}). Running with fallback task runner.")
+            _redis_pool = None
+    return _redis_pool
 
 
 async def queue_and_execute_generation(
@@ -24,116 +39,51 @@ async def queue_and_execute_generation(
     school_id: str,
     user_id: str,
     spec: GenerationRequestSpec,
-) -> Tuple[GenerationJob, Optional[Assessment]]:
-    # 1. Create generation job in queued state
+    idempotency_key: Optional[str] = None,
+) -> Tuple[GenerationJob, Optional[Any]]:
+    """
+    Persists the generation job in 'queued' state and delegates execution to background worker.
+    Returns HTTP 202 immediately to free up the web server.
+    """
+    # 1. Create generation job in 'queued' state
     job = GenerationJob(
         school_id=school_id,
         requester_id=user_id,
-        status="running",
-        model=gateway.provider_name,
+        status="queued",
+        model=settings.AI_PROVIDER,
         prompt_version="v1.0",
         input_json=spec.model_dump(),
     )
     db.add(job)
-    await db.flush()
+    await db.commit()
+    await db.refresh(job)
 
-    try:
-        # 2. Call AI Gateway
-        questions, warnings = await gateway.generate_draft(spec, prompt_version="v1.0")
-        job.warnings = warnings
+    # In test environments (isolated in-memory SQLite fixtures), run directly with test session
+    if settings.ENVIRONMENT == "test":
+        from backend.app.generation.worker import execute_generation_job_with_db
+        await execute_generation_job_with_db(db, job.id)
+        await db.refresh(job)
+        return job, None
 
-        # 3. Create Assessment Draft (needs_review)
-        title_prefix = spec.output_type.replace("_", " ").title()
-        assessment = Assessment(
-            school_id=school_id,
-            creator_id=user_id,
-            class_id=spec.class_id,
-            section_id=spec.section_id,
-            subject_id=spec.subject_id,
-            title=f"{title_prefix}: {spec.chapter} ({len(questions)} Questions)",
-            type=spec.output_type,
-            status="needs_review",  # Human-in-the-loop: Teacher review required
-            total_marks=spec.total_marks,
-            instructions=spec.instructions,
-            settings={
-                "difficulty_distribution": spec.difficulty_distribution,
-                "topics": spec.topics,
-                "warnings": warnings,
-            },
-        )
-        db.add(assessment)
-        await db.flush()
+    # 2. Dispatch to ARQ Redis worker for production/dev
+    pool = await get_arq_pool()
+    if pool is not None:
+        try:
+            await pool.enqueue_job("execute_generation_job", job.id)
+            logger.info(f"Enqueued job {job.id} to Arq Redis queue.")
+            return job, None
+        except Exception as err:
+            logger.warning(f"Failed to enqueue to Redis ({err}). Executing via background task.")
 
-        # 4. Save Questions and link as AssessmentItems
-        for pos, q in enumerate(questions, start=1):
-            q_row = Question(
-                school_id=school_id,
-                author_id=user_id,
-                subject_id=spec.subject_id,
-                category=q.category,
-                type=q.type,
-                prompt=q.prompt,
-                marks=q.marks,
-                difficulty=q.difficulty,
-                topic_tags=q.topic_tags,
-                content_data={
-                    "options": [opt.model_dump() for opt in q.options] if q.options else None,
-                    "match_pairs": [p.model_dump() for p in q.match_pairs] if q.match_pairs else None,
-                    "code_snippet": q.code_snippet,
-                    "diagram_description": q.diagram_description,
-                    "passage_or_case_text": q.passage_or_case_text,
-                },
-                answer_data={
-                    "expected_answer": q.expected_answer,
-                    "answer_keys": q.answer_keys,
-                    "marking_scheme": q.marking_scheme,
-                    "rationale": q.rationale,
-                },
-                status="draft",
-            )
-            db.add(q_row)
-            await db.flush()
-
-            item = AssessmentItem(
-                assessment_id=assessment.id,
-                question_id=q_row.id,
-                position=pos,
-                marks_override=q.marks,
-            )
-            db.add(item)
-
-        job.status = "succeeded"
-        job.output_json = {
-            "assessment_id": assessment.id,
-            "question_count": len(questions),
-            "total_marks": spec.total_marks,
-            "questions": [q.model_dump() for q in questions],
-        }
-
-        await record_audit_event(
-            db=db,
-            school_id=school_id,
-            actor_id=user_id,
-            action="generation.completed",
-            entity_type="assessment",
-            entity_id=assessment.id,
-            metadata_json={"output_type": spec.output_type, "questions": len(questions)},
-        )
-
-        return job, assessment
-
-    except Exception as ex:
-        job.status = "failed"
-        job.error_code = "GENERATION_ERROR"
-        job.error_message = str(ex)
-        await db.flush()
-        raise ex
+    # 3. Fallback when Redis is offline in local dev
+    asyncio.create_task(execute_generation_job({}, job.id))
+    return job, None
 
 
 async def get_generation_job(db: AsyncSession, school_id: str, job_id: str) -> GenerationJob:
     stmt = select(GenerationJob).where(GenerationJob.id == job_id, GenerationJob.school_id == school_id)
-    res = await db.execute(stmt)
-    job = res.scalar_one_or_none()
+    result = await db.execute(stmt)
+    job = result.scalar_one_or_none()
     if not job:
         raise NotFoundException("GenerationJob", job_id)
     return job
@@ -141,10 +91,13 @@ async def get_generation_job(db: AsyncSession, school_id: str, job_id: str) -> G
 
 async def cancel_generation_job(db: AsyncSession, school_id: str, job_id: str) -> GenerationJob:
     job = await get_generation_job(db, school_id, job_id)
-    if job.status in ("succeeded", "failed"):
-        raise ValidationException(f"Cannot cancel job with terminal status '{job.status}'")
+    if job.status in ["succeeded", "failed"]:
+        raise ValidationException(f"Cannot cancel a job that has already {job.status}.")
 
     job.status = "cancelled"
-    await db.flush()
+    job.error_code = "USER_CANCELLED"
+    job.error_message = "Generation job was cancelled by the teacher."
+    await db.commit()
+    await db.refresh(job)
+    logger.info(f"Job {job_id} marked as cancelled.")
     return job
-

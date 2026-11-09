@@ -1,6 +1,8 @@
 """
 Pytest Fixtures for Backend Test Suite
 """
+import os
+os.environ["ENVIRONMENT"] = "test"
 import pytest
 import pytest_asyncio
 from typing import AsyncGenerator
@@ -8,6 +10,7 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from backend.app.core.config import settings
+settings.ENVIRONMENT = "test"
 from backend.app.core.db import Base, get_db
 from backend.app.core.security import hash_password
 from backend.app.main import app
