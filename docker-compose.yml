@@ -62,7 +62,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app/backend
-      - ./ai-engine:/app/ai-engine
+      - ./ai_engine:/app/ai_engine
       - ./database:/app/database
       - local_storage:/app/local_storage
     depends_on:

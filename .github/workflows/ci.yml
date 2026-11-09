@@ -26,7 +26,7 @@ jobs:
 
       - name: Lint with Ruff
         run: |
-          ruff check backend ai-engine
+          ruff check backend ai_engine
 
       - name: Run Backend Tests
         env:

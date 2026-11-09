@@ -36,7 +36,7 @@ Section 9 strictly prohibits:
 Mind enforces a strict domain boundary:
 - **Generation Pipelines**: AI models (e.g., Google Gemini) receive **only** curriculum parameters: board, grade, chapter, topic, learning objective, and pedagogical style instructions.
 - **Never Transmit Student PII**: Student names, roll numbers, individual answers, biometric data, or behavioral profiles are **never** transmitted to external AI providers.
-- **AI Gateway Safeguard**: All outbound prompts passing through `ai-engine/adapters/gateway.py` are audited for absence of PII.
+- **AI Gateway Safeguard**: All outbound prompts passing through `ai_engine/adapters/gateway.py` are audited for absence of PII.
 
 ---
 
