@@ -44,6 +44,16 @@ class CustomQuestionGenerateRequest(GenerationBaseRequest):
     question_types: List[QuestionType] = ["mcq", "short_answer"]
 
 
+class RemedialPracticeGenerateRequest(BaseModel):
+    class_id: str
+    section_id: str
+    subject_id: str
+    topic: str
+    question_count: int = Field(5, ge=1, le=10)
+    total_marks: int = Field(10, ge=1, le=25)
+    instructions: Optional[str] = None
+
+
 class JobResponse(BaseModel):
     job_id: str
     status: str

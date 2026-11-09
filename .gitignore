@@ -3,9 +3,7 @@
 env/
 venv/
 node_modules/
-.venv
-infrastructure
-docher-compose.yml
+
 # Byte-compiled / cache files
 __pycache__/
 *.py[cod]

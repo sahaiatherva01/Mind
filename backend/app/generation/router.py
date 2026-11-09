@@ -12,6 +12,7 @@ from backend.app.generation.schemas import (
     QuizGenerateRequest,
     QuestionPaperGenerateRequest,
     CustomQuestionGenerateRequest,
+    RemedialPracticeGenerateRequest,
     JobResponse,
     JobDetailResponse,
 )
