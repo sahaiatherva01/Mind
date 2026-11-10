@@ -33,3 +33,4 @@ This document tracks items that are intentionally out of scope for V1/V2 impleme
 - **Model Fine-Tuning (LoRA / QLoRA):** Training custom checkpoints on school content.
 - **MCP Servers:** Model Context Protocol runtime integration.
 - **Daily AI Tokens / Quotas:** Hard per-user token quotas.
+
