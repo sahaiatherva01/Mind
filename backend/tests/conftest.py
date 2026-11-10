@@ -192,6 +192,7 @@ async def seeded_test_data(db_session: AsyncSession):
     enroll1 = StudentEnrollment(
         school_id=school1.id,
         student_id=student1.id,
+        academic_year_id=year1.id,
         class_id=class_11.id,
         section_id=sec_11e.id,
         roll_number="11E-01",

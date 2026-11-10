@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../../api/client';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, UserCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const TeacherClasses: React.FC = () => {
@@ -40,9 +40,17 @@ export const TeacherClasses: React.FC = () => {
                 <span className="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700">
                   {a.subject_name}
                 </span>
-                <span className="text-xs font-mono font-bold text-slate-500">
-                  Sec {a.section_name}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  {a.is_class_teacher && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center">
+                      <UserCheck className="w-3 h-3 mr-0.5" />
+                      Class Teacher
+                    </span>
+                  )}
+                  <span className="text-xs font-mono font-bold text-slate-500">
+                    Sec {a.section_name}
+                  </span>
+                </div>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mt-3">{a.class_name}</h3>
               <p className="text-xs text-slate-500 mt-1">
@@ -66,7 +74,7 @@ export const TeacherClasses: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2">
               <Link
                 to="/teacher/ai-studio"
                 className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center"
@@ -74,6 +82,15 @@ export const TeacherClasses: React.FC = () => {
                 <Sparkles className="w-3.5 h-3.5 mr-1 text-indigo-500" />
                 Generate Assessment
               </Link>
+              {a.is_class_teacher && (
+                <Link
+                  to={`/teacher/rosters/${a.section_id}`}
+                  className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md flex items-center"
+                >
+                  <UserCheck className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                  Manage Roster
+                </Link>
+              )}
             </div>
           </div>
         ))}

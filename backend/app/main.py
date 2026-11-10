@@ -23,6 +23,7 @@ from backend.app.academics.router import (
     academics_router,
 )
 from backend.app.academics.coordinator_router import router as coordinator_router
+from backend.app.academics.roster_router import router as roster_router
 from backend.app.audit.router import router as audit_router
 from backend.app.generation.router import router as generation_router
 from backend.app.assessments.router import router as assessments_router
@@ -86,6 +87,7 @@ app.include_router(enrollments_router, prefix=api_v1_prefix)
 app.include_router(curriculum_router, prefix=api_v1_prefix)
 app.include_router(academics_router, prefix=api_v1_prefix)
 app.include_router(coordinator_router, prefix=api_v1_prefix)
+app.include_router(roster_router, prefix=api_v1_prefix)
 app.include_router(audit_router, prefix=api_v1_prefix)
 app.include_router(generation_router, prefix=api_v1_prefix)
 app.include_router(assessments_router, prefix=api_v1_prefix)

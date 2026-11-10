@@ -34,11 +34,11 @@ Priorities: P0 = Phase exit blocker, P1 = Phase feature, P2 = Advanced.
 ---
 
 ## Phase 3 — Teacher: Students, Rosters & Credentials
-- [ ] P0 Class Teacher single and CSV student onboarding with roll number assignment.
-- [ ] P0 Roll number uniqueness constraint per `(school, year, class, section)` on `StudentEnrollment`.
-- [ ] P0 Roster state machine (`Pending` → `Verified` → `Locked`) and `RosterChangeRequest` workflow.
-- [ ] P0 Student credential generation using school template, printable login slips, and forced first-login password change.
-- [ ] P0 Audit trail verification for all roster changes.
+- [x] P0 Class Teacher single and CSV student onboarding with roll number assignment.
+- [x] P0 Roll number uniqueness constraint per `(school, year, class, section)` on `StudentEnrollment`.
+- [x] P0 Roster state machine (`Pending` → `Verified` → `Locked`) and `RosterChangeRequest` workflow.
+- [x] P0 Student credential generation using school template, printable login slips, and forced first-login password change.
+- [x] P0 Audit trail verification for all roster changes.
 
 ---
 

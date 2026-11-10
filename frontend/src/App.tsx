@@ -17,6 +17,7 @@ import { AssignmentMatrix } from './pages/coordinator/AssignmentMatrix';
 // Teacher Pages
 import { TeacherDashboard } from './pages/teacher/TeacherDashboard';
 import { TeacherClasses } from './pages/teacher/TeacherClasses';
+import { SectionRoster } from './pages/teacher/SectionRoster';
 import { AIStudio } from './pages/teacher/AIStudio';
 import { AssessmentEditor } from './pages/teacher/AssessmentEditor';
 import { TeacherAssessments } from './pages/teacher/TeacherAssessments';
@@ -158,6 +159,14 @@ export const App: React.FC = () => {
               element={
                 <ProtectedRoute allowedRoles={teacherRoles}>
                   <TeacherClasses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/rosters/:sectionId"
+              element={
+                <ProtectedRoute allowedRoles={teacherRoles}>
+                  <SectionRoster />
                 </ProtectedRoute>
               }
             />
