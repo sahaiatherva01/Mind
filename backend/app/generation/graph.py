@@ -221,3 +221,4 @@ async def run_generation_pipeline(
     """Helper entry point for generation jobs."""
     graph = GenerationStateGraph()
     return await graph.execute(spec=spec, prompt_version=prompt_version)
+

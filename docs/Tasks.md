@@ -52,10 +52,10 @@ Priorities: P0 = Phase exit blocker, P1 = Phase feature, P2 = Advanced.
 ---
 
 ## Phase 5 — Assignments & Notifications
-- [ ] P0 Implement full `notifications` module (in-app store + email backend adapter).
-- [ ] P0 Assignment lifecycle (draft → published → submission → evaluation).
-- [ ] P1 Agent Track A2: Migrate AI Studio generation to LangGraph `StateGraph` (Worksheets, Quizzes, Papers, Custom Questions).
-- [ ] P1 Assignment Generator and Difficulty Tagger agents with structured outputs and SymPy verification.
+- [x] P0 Implement full `notifications` module (in-app store + email backend adapter).
+- [x] P0 Assignment lifecycle (draft → published → submission → evaluation).
+- [x] P1 Agent Track A2: Migrate AI Studio generation to LangGraph `StateGraph` (Worksheets, Quizzes, Papers, Custom Questions).
+- [x] P1 Assignment Generator and Difficulty Tagger agents with structured outputs and SymPy verification.
 
 ---
 

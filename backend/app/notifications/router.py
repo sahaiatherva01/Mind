@@ -76,3 +76,4 @@ async def mark_all_read(
         school_id=current_user.school_id,
     )
     return {"marked_count": count}
+

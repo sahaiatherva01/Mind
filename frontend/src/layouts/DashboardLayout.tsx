@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { NotificationBell } from '../components/notifications/NotificationBell';
 import {
   LayoutDashboard,
   GraduationCap,
@@ -373,6 +374,7 @@ export const DashboardLayout: React.FC = () => {
             <span className="font-semibold text-slate-800">{school?.name}</span>
           </div>
           <div className="flex items-center space-x-3">
+            <NotificationBell />
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 capitalize border border-indigo-100">
               {user.role} workspace
             </span>

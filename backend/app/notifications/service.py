@@ -203,3 +203,4 @@ async def get_unread_count(
 
     res = await db.execute(stmt)
     return res.scalar_one() or 0
+

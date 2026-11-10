@@ -38,3 +38,4 @@ class Notification(UUIDBase, TenantMixin):
 
     # Relationships
     user: Mapped["User"] = relationship("User")  # type: ignore # noqa: F821
+

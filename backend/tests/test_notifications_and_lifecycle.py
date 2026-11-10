@@ -9,7 +9,6 @@ from sqlalchemy import select
 
 from backend.app.identity.models import User
 from backend.app.assessments.models import Assessment
-from backend.app.assessments.lifecycle_service import approve_assessment, publish_or_schedule_assessment
 from backend.app.notifications.models import Notification
 from backend.app.notifications.service import create_notification, EmailAdapter
 from ai_engine.schemas.question import GenerationRequestSpec
