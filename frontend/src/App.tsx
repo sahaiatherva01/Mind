@@ -10,6 +10,10 @@ import { AcademicSetup } from './pages/admin/AcademicSetup';
 import { BulkImport } from './pages/admin/BulkImport';
 import { AuditLogs } from './pages/admin/AuditLogs';
 
+// Coordinator Pages
+import { CoordinatorDashboard } from './pages/coordinator/CoordinatorDashboard';
+import { AssignmentMatrix } from './pages/coordinator/AssignmentMatrix';
+
 // Teacher Pages
 import { TeacherDashboard } from './pages/teacher/TeacherDashboard';
 import { TeacherClasses } from './pages/teacher/TeacherClasses';
@@ -57,12 +61,8 @@ const RootRedirect: React.FC = () => {
   if (isLoading) return null;
   if (!user) return <Navigate to="/login" replace />;
 
-  if (
-    user.role === 'admin' ||
-    user.role === 'school_admin' ||
-    user.role === 'academic_coordinator' ||
-    user.role === 'platform_admin'
-  ) {
+  if (user.role === 'academic_coordinator') return <Navigate to="/coordinator/dashboard" replace />;
+  if (user.role === 'admin' || user.role === 'school_admin' || user.role === 'platform_admin') {
     return <Navigate to="/admin/dashboard" replace />;
   }
   if (user.role === 'teacher') return <Navigate to="/teacher/dashboard" replace />;
@@ -73,6 +73,7 @@ const RootRedirect: React.FC = () => {
 
 export const App: React.FC = () => {
   const adminRoles: UserRole[] = ['admin', 'school_admin', 'academic_coordinator', 'platform_admin'];
+  const coordinatorRoles: UserRole[] = ['academic_coordinator', 'school_admin', 'platform_admin'];
   const teacherRoles: UserRole[] = ['teacher', 'admin', 'school_admin', 'academic_coordinator'];
   const studentRoles: UserRole[] = ['student'];
 
@@ -121,6 +122,24 @@ export const App: React.FC = () => {
               element={
                 <ProtectedRoute allowedRoles={adminRoles}>
                   <AuditLogs />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Academic Coordinator Routes */}
+            <Route
+              path="/coordinator/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={coordinatorRoles}>
+                  <CoordinatorDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/coordinator/assignments"
+              element={
+                <ProtectedRoute allowedRoles={coordinatorRoles}>
+                  <AssignmentMatrix />
                 </ProtectedRoute>
               }
             />

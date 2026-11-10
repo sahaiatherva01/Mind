@@ -13,6 +13,7 @@ import {
   LogOut,
   School as SchoolIcon,
   CheckCircle,
+  Layers,
 } from 'lucide-react';
 
 export const DashboardLayout: React.FC = () => {
@@ -97,11 +98,53 @@ export const DashboardLayout: React.FC = () => {
             </>
           )}
 
-          {/* School Admin & Academic Coordinator Navigation */}
-          {(user.role === 'admin' || user.role === 'school_admin' || user.role === 'academic_coordinator') && (
+          {/* Academic Coordinator Navigation */}
+          {user.role === 'academic_coordinator' && (
             <>
               <div className="px-3 pb-2 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                {user.role === 'academic_coordinator' ? 'Coordinator Panel' : 'Administration'}
+                Band Coordination
+              </div>
+              <NavLink
+                to="/coordinator/dashboard"
+                className={({ isActive }) =>
+                  `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`
+                }
+              >
+                <LayoutDashboard className="w-4 h-4 mr-3" />
+                Band Overview
+              </NavLink>
+              <NavLink
+                to="/coordinator/assignments"
+                className={({ isActive }) =>
+                  `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`
+                }
+              >
+                <Layers className="w-4 h-4 mr-3" />
+                Assignment Matrix
+              </NavLink>
+              <NavLink
+                to="/admin/bulk-import"
+                className={({ isActive }) =>
+                  `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`
+                }
+              >
+                <FileSpreadsheet className="w-4 h-4 mr-3" />
+                Bulk Import
+              </NavLink>
+            </>
+          )}
+
+          {/* School Admin Navigation */}
+          {(user.role === 'admin' || user.role === 'school_admin') && (
+            <>
+              <div className="px-3 pb-2 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                Administration
               </div>
               <NavLink
                 to="/admin/dashboard"
@@ -124,6 +167,17 @@ export const DashboardLayout: React.FC = () => {
               >
                 <GraduationCap className="w-4 h-4 mr-3" />
                 Academic Setup
+              </NavLink>
+              <NavLink
+                to="/coordinator/assignments"
+                className={({ isActive }) =>
+                  `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`
+                }
+              >
+                <Layers className="w-4 h-4 mr-3" />
+                Assignment Matrix
               </NavLink>
               <NavLink
                 to="/admin/bulk-import"

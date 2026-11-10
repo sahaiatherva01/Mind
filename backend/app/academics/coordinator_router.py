@@ -105,3 +105,4 @@ async def list_band_curriculum_endpoint(
 ):
     """Fetches curriculum chapters and learning outcomes for grades in the coordinator's band."""
     return await coordinator_service.list_band_curriculum(db, current_user)
+

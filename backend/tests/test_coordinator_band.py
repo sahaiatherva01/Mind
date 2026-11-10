@@ -44,15 +44,15 @@ async def test_coordinator_band_summary(client: AsyncClient, seeded_test_data):
 async def test_coordinator_band_isolation_denies_cross_band(client: AsyncClient, seeded_test_data):
     """Coordinator of Classes 11-12 cannot assign a teacher to Class 9 (cross-band protection)."""
     token = await get_token(client, "coordinator@school1.org", "CoordPass123!")
-    class_9_id = seeded_test_data["class_9"].id
-    sec_9a_id = seeded_test_data["sec_9a"].id
+    class_8_id = seeded_test_data["class_8"].id
+    sec_8a_id = seeded_test_data["sec_8a"].id
     sub_math_id = seeded_test_data["sub_math"].id
     teacher1_id = seeded_test_data["teacher1"].id
 
     payload = {
         "teacher_id": teacher1_id,
-        "class_id": class_9_id,
-        "section_id": sec_9a_id,
+        "class_id": class_8_id,
+        "section_id": sec_8a_id,
         "subject_id": sub_math_id,
         "is_class_teacher": False,
     }
@@ -152,7 +152,7 @@ async def test_coordinator_assignment_matrix(client: AsyncClient, seeded_test_da
     assert len(matrix) >= 2
     for item in matrix:
         assert item["class_name"] in ("Class 11", "Class 12")
-        assert item["class_name"] != "Class 9"
+        assert item["class_name"] != "Class 8"
 
 
 @pytest.mark.asyncio
@@ -200,17 +200,17 @@ async def test_coordinator_cannot_toggle_teacher_outside_band(client: AsyncClien
     assert new_t_res.status_code == 201
     middle_teacher_id = new_t_res.json()["id"]
 
-    # Assign to Class 9 (outside senior coordinator's band)
-    class_9_id = seeded_test_data["class_9"].id
-    sec_9a_id = seeded_test_data["sec_9a"].id
+    # Assign to Class 8 (outside senior coordinator's band)
+    class_8_id = seeded_test_data["class_8"].id
+    sec_8a_id = seeded_test_data["sec_8a"].id
     sub_math_id = seeded_test_data["sub_math"].id
 
     asgn_res = await client.post(
         "/api/v1/teacher-assignments",
         json={
             "teacher_id": middle_teacher_id,
-            "class_id": class_9_id,
-            "section_id": sec_9a_id,
+            "class_id": class_8_id,
+            "section_id": sec_8a_id,
             "subject_id": sub_math_id,
         },
         headers={"Authorization": f"Bearer {admin_token}"}

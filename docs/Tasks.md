@@ -24,12 +24,12 @@ Priorities: P0 = Phase exit blocker, P1 = Phase feature, P2 = Advanced.
 ---
 
 ## Phase 2 — Academic Coordinator & Assignment Matrix
-- [ ] P0 Academic Coordinator dashboard scoped strictly to assigned band.
-- [ ] P0 Teacher management: CRUD, status toggling, password resets within band.
-- [ ] P0 Bulk Excel teacher onboarding with pre-commit validation and row-level error reporting.
-- [ ] P0 Assignment matrix (Teacher × Class × Section × Subject).
-- [ ] P0 Enforce exactly one Class Teacher per section constraint.
-- [ ] P0 Band-scoped curriculum chapter and topic viewer.
+- [x] P0 Academic Coordinator dashboard scoped strictly to assigned band.
+- [x] P0 Teacher management: CRUD, status toggling, password resets within band.
+- [x] P0 Bulk Excel teacher onboarding with pre-commit validation and row-level error reporting.
+- [x] P0 Assignment matrix (Teacher × Class × Section × Subject).
+- [x] P0 Enforce exactly one Class Teacher per section constraint.
+- [x] P0 Band-scoped curriculum chapter and topic viewer.
 
 ---
 

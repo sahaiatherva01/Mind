@@ -412,3 +412,4 @@ async def list_band_curriculum(
     res = await db.execute(stmt)
     nodes = res.scalars().all()
     return [CurriculumNodeResponse.model_validate(n) for n in nodes]
+
