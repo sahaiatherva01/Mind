@@ -81,6 +81,9 @@ class TeacherAssignment(UUIDBase, TenantMixin):
         String(36), ForeignKey("academic_years.id", ondelete="CASCADE"), nullable=True, index=True
     )
     is_class_teacher: Mapped[bool] = mapped_column(default=False, nullable=False)
+    is_substitute: Mapped[bool] = mapped_column(default=False, nullable=False)
+    valid_from: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    valid_to: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)  # active, inactive
 
     teacher: Mapped["User"] = relationship("User")  # type: ignore # noqa: F821

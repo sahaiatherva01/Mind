@@ -9,6 +9,10 @@ import {
   UserCheck,
   ShieldCheck,
   ArrowRight,
+  AlertTriangle,
+  ClipboardList,
+  CheckCircle,
+  PlusCircle,
 } from 'lucide-react';
 
 interface ClassItem {
@@ -31,24 +35,100 @@ interface BandSummary {
   class_teachers: Record<string, string | null>;
 }
 
+interface EarlyWarningStudent {
+  student_id: string;
+  student_name: string;
+  class_name: string;
+  section_name: string;
+  average_score_pct: number;
+  tab_switches_total: number;
+  materials_read_count: number;
+  risk_score: number;
+  risk_factors: string[];
+}
+
+interface InterventionItem {
+  id: string;
+  student_name: string;
+  student_id: string;
+  risk_score: number;
+  action_type: string;
+  status: string;
+  notes: string;
+  created_at: string;
+}
+
 export const CoordinatorDashboard: React.FC = () => {
   const [summary, setSummary] = useState<BandSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Phase 8 Early-Warning & Interventions
+  const [atRiskStudents, setAtRiskStudents] = useState<EarlyWarningStudent[]>([]);
+  const [interventions, setInterventions] = useState<InterventionItem[]>([]);
+  const [selectedStudentForAction, setSelectedStudentForAction] = useState<EarlyWarningStudent | null>(null);
+  const [interventionAction, setInterventionAction] = useState<string>('remedial_session');
+  const [interventionNotes, setInterventionNotes] = useState<string>('');
+  const [isSubmittingIntervention, setIsSubmittingIntervention] = useState<boolean>(false);
+  const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
+
   useEffect(() => {
-    const fetchSummary = async () => {
+    const fetchData = async () => {
       try {
-        const data = await apiRequest<BandSummary>('/coordinator/band-summary');
-        setSummary(data);
+        const [sumData, warnData, intData] = await Promise.all([
+          apiRequest<BandSummary>('/coordinator/band-summary'),
+          apiRequest<EarlyWarningStudent[]>('/coordinator/early-warning-signals').catch(() => []),
+          apiRequest<InterventionItem[]>('/coordinator/interventions').catch(() => []),
+        ]);
+        setSummary(sumData);
+        setAtRiskStudents(warnData || []);
+        setInterventions(intData || []);
       } catch (err: any) {
         setError(err.message || 'Failed to load coordinator band summary');
       } finally {
         setLoading(false);
       }
     };
-    fetchSummary();
+    fetchData();
   }, []);
+
+  const handleCreateIntervention = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStudentForAction) return;
+    setIsSubmittingIntervention(true);
+    setActionSuccessMsg(null);
+    try {
+      const created = await apiRequest<InterventionItem>('/coordinator/interventions', {
+        method: 'POST',
+        body: JSON.stringify({
+          student_id: selectedStudentForAction.student_id,
+          risk_score: selectedStudentForAction.risk_score,
+          action_type: interventionAction,
+          notes: interventionNotes || 'Early warning pedagogical support planned.',
+        }),
+      });
+      setInterventions([created, ...interventions]);
+      setActionSuccessMsg(`Intervention recorded for ${selectedStudentForAction.student_name}`);
+      setSelectedStudentForAction(null);
+      setInterventionNotes('');
+    } catch (err: any) {
+      alert(err.message || 'Failed to create intervention');
+    } finally {
+      setIsSubmittingIntervention(false);
+    }
+  };
+
+  const handleUpdateStatus = async (interventionId: string, newStatus: string) => {
+    try {
+      const updated = await apiRequest<InterventionItem>(`/coordinator/interventions/${interventionId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus }),
+      });
+      setInterventions(interventions.map((i) => (i.id === interventionId ? updated : i)));
+    } catch (err: any) {
+      alert(err.message || 'Failed to update intervention status');
+    }
+  };
 
   if (loading) {
     return (
@@ -195,6 +275,190 @@ export const CoordinatorDashboard: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Phase 8: Early-Warning Signals & Coordinator Interventions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Early-Warning At-Risk Signals Card */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Early-Warning Signals</h3>
+                <p className="text-xs text-slate-500">Autonomous risk detection across Band {summary.min_grade}–{summary.max_grade}</p>
+              </div>
+            </div>
+            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+              {atRiskStudents.length} Flagged
+            </span>
+          </div>
+
+          {actionSuccessMsg && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-xs flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-emerald-600" />
+              {actionSuccessMsg}
+            </div>
+          )}
+
+          {atRiskStudents.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-400">
+              <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+              No students currently flagged in the early-warning matrix for this band.
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+              {atRiskStudents.map((st) => (
+                <div
+                  key={st.student_id}
+                  className="p-3.5 rounded-lg border border-slate-200 bg-slate-50/70 hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm text-slate-900">{st.student_name}</span>
+                      <span className="text-xs text-slate-500 font-mono">
+                        {st.class_name} • Sec {st.section_name}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-700">
+                        Risk: {st.risk_score}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {st.risk_factors.map((rf, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-0.5 rounded bg-white text-slate-600 border border-slate-200 text-[11px]"
+                        >
+                          {rf}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedStudentForAction(st)}
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold whitespace-nowrap self-start sm:self-auto transition-colors"
+                  >
+                    <PlusCircle className="w-3.5 h-3.5 mr-1" />
+                    Intervene
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Intervention Lifecycle Tracker */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                <ClipboardList className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Intervention Tracker</h3>
+                <p className="text-xs text-slate-500">Pedagogical support and action history</p>
+              </div>
+            </div>
+            <span className="text-xs text-slate-500 font-medium">
+              {interventions.length} Total
+            </span>
+          </div>
+
+          {/* New Intervention Form if Student Selected */}
+          {selectedStudentForAction && (
+            <form onSubmit={handleCreateIntervention} className="p-4 bg-indigo-50/60 rounded-xl border border-indigo-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-indigo-900">
+                  New Action: {selectedStudentForAction.student_name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedStudentForAction(null)}
+                  className="text-xs text-slate-500 hover:text-slate-800"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">Action Type</label>
+                  <select
+                    value={interventionAction}
+                    onChange={(e) => setInterventionAction(e.target.value)}
+                    className="w-full text-xs rounded-md border-slate-300 shadow-sm py-1.5 px-2 bg-white"
+                  >
+                    <option value="remedial_session">Remedial Session</option>
+                    <option value="counseling">Counseling</option>
+                    <option value="parent_meeting">Parent Meeting</option>
+                    <option value="peer_tutoring">Peer Tutoring</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">Pedagogical Notes</label>
+                  <input
+                    type="text"
+                    value={interventionNotes}
+                    onChange={(e) => setInterventionNotes(e.target.value)}
+                    placeholder="Focus areas & goals..."
+                    className="w-full text-xs rounded-md border-slate-300 shadow-sm py-1.5 px-2 bg-white"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmittingIntervention}
+                className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg shadow-sm transition-colors"
+              >
+                {isSubmittingIntervention ? 'Saving...' : 'Confirm Pedagogical Intervention'}
+              </button>
+            </form>
+          )}
+
+          {/* Intervention List */}
+          {interventions.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-400">
+              No active interventions logged yet.
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+              {interventions.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-sm text-slate-900">{inv.student_name}</span>
+                      <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 uppercase">
+                        {inv.action_type.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <select
+                      value={inv.status}
+                      onChange={(e) => handleUpdateStatus(inv.id, e.target.value)}
+                      className={`text-xs font-semibold rounded-md border px-2 py-1 ${
+                        inv.status === 'resolved'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : inv.status === 'in_progress'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : 'bg-rose-50 text-rose-700 border-rose-200'
+                      }`}
+                    >
+                      <option value="open">Open</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="resolved">Resolved</option>
+                    </select>
+                  </div>
+                  {inv.notes && <p className="text-xs text-slate-600">{inv.notes}</p>}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

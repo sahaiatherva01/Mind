@@ -103,3 +103,4 @@ class ExamBlueprint(UUIDBase, TenantMixin):
 
     creator: Mapped["User"] = relationship("User", foreign_keys=[creator_id])  # type: ignore # noqa: F821
     approver: Mapped[Optional["User"]] = relationship("User", foreign_keys=[approved_by])  # type: ignore # noqa: F821
+

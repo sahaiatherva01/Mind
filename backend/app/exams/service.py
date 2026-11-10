@@ -557,3 +557,4 @@ class ExamCalendarService:
         await db.flush()
 
         return EvaluationAssistResponse(**eval_data)
+

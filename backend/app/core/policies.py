@@ -4,7 +4,7 @@ Evaluates role and scope together via:
     authorize(actor, action, resource, db) -> bool | raises ForbiddenException / TenantMismatchException
 """
 from typing import Optional, Any, Dict
-from sqlalchemy import select
+from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.core.errors import ForbiddenException, TenantMismatchException
 from backend.app.identity.models import User, RoleName, RoleAssignment
@@ -137,12 +137,22 @@ async def authorize(
                 if not res_class_id or not res_section_id:
                     return True  # General teacher access in school
                 if db:
+                    from datetime import datetime, timezone
+                    now_utc = datetime.now(timezone.utc)
                     stmt = select(TeacherAssignment).where(
                         TeacherAssignment.school_id == assignment.school_id,
                         TeacherAssignment.teacher_id == actor.id,
                         TeacherAssignment.class_id == res_class_id,
                         TeacherAssignment.section_id == res_section_id,
-                        TeacherAssignment.status == "active"
+                        TeacherAssignment.status == "active",
+                        or_(
+                            TeacherAssignment.is_substitute == False,
+                            and_(
+                                TeacherAssignment.is_substitute == True,
+                                or_(TeacherAssignment.valid_from.is_(None), TeacherAssignment.valid_from <= now_utc),
+                                or_(TeacherAssignment.valid_to.is_(None), TeacherAssignment.valid_to >= now_utc),
+                            ),
+                        ),
                     )
                     if res_subject_id:
                         stmt = stmt.where(TeacherAssignment.subject_id == res_subject_id)

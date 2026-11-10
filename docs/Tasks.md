@@ -69,17 +69,17 @@ Priorities: P0 = Phase exit blocker, P1 = Phase feature, P2 = Advanced.
 ---
 
 ## Phase 7 — Exams, Calendar, Report Cards & Approvals
-- [ ] P0 Academic calendar with exam clash detection and policy limits.
-- [ ] P0 Band-wide exam planner with Set A–D generation from common blueprints.
-- [ ] P1 Evaluation assistant LangGraph agent for subjective grading suggestions.
-- [ ] P0 Resilient exam player with autosave and tab-switch logging.
-- [ ] P1 Branded report card designer and PDF generation; gradebook.
+- [x] P0 Academic calendar with exam clash detection and policy limits.
+- [x] P0 Band-wide exam planner with Set A–D generation from common blueprints.
+- [x] P1 Evaluation assistant LangGraph agent for subjective grading suggestions.
+- [x] P0 Resilient exam player with autosave and tab-switch logging.
+- [x] P1 Branded report card designer and PDF generation; gradebook.
 
 ---
 
 ## Phase 8 — Advanced Non-Parked Workflows
-- [ ] P1 Early-warning dashboard and Coordinator intervention list.
-- [ ] P1 Smart student groups and one-click remedial assignment generation.
-- [ ] P1 Substitution manager with automated temporal access revocation.
-- [ ] P2 Student goal tracker, smart revision list, and structured teacher query form.
+- [x] P1 Early-warning dashboard and Coordinator intervention list.
+- [x] P1 Smart student groups and one-click remedial assignment generation.
+- [x] P1 Substitution manager with automated temporal access revocation.
+- [x] P2 Student goal tracker, smart revision list, and structured teacher query form.
 

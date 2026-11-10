@@ -1,17 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { apiRequest } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 import {
   AlertCircle,
   ArrowLeft,
   Key,
+  Award,
+  Printer,
+  X,
+  GraduationCap,
 } from 'lucide-react';
+
+interface SubjectGradeReport {
+  subject_id: string;
+  subject_name: string;
+  total_max_marks: number;
+  obtained_marks: number;
+  percentage: number;
+  grade: string;
+  remarks: string;
+}
+
+interface StudentReportCardData {
+  school_name: string;
+  student_name: string;
+  roll_number?: string;
+  class_name: string;
+  section_name: string;
+  term: string;
+  academic_year: string;
+  subjects: SubjectGradeReport[];
+  total_possible_marks: number;
+  total_obtained_marks: number;
+  overall_percentage: number;
+  overall_grade: string;
+  attendance_pct: number;
+  teacher_general_remarks: string;
+}
 
 export const StudentResults: React.FC = () => {
   const [searchParams] = useSearchParams();
   const attemptId = searchParams.get('attempt_id');
+  const { user } = useAuth();
 
   const [result, setResult] = useState<any | null>(null);
+  const [reportCard, setReportCard] = useState<StudentReportCardData | null>(null);
+  const [showReportCardModal, setShowReportCardModal] = useState(false);
+  const [isLoadingReportCard, setIsLoadingReportCard] = useState(false);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +69,20 @@ export const StudentResults: React.FC = () => {
     }
     load();
   }, [attemptId]);
+
+  const handleOpenReportCard = async () => {
+    if (!user) return;
+    setIsLoadingReportCard(true);
+    setShowReportCardModal(true);
+    try {
+      const rc = await apiRequest<StudentReportCardData>(`/reports/student/${user.id}/report-card`);
+      setReportCard(rc);
+    } catch (err: any) {
+      console.error('Failed to load student report card', err);
+    } finally {
+      setIsLoadingReportCard(false);
+    }
+  };
 
   if (!attemptId) {
     return (
@@ -70,9 +121,18 @@ export const StudentResults: React.FC = () => {
       {/* Result Hero Header */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-50 text-purple-700">
-            Released Results & Model Solutions
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-50 text-purple-700">
+              Released Results & Model Solutions
+            </span>
+            <button
+              onClick={handleOpenReportCard}
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition border border-indigo-200"
+            >
+              <Award className="w-3.5 h-3.5 text-indigo-600" />
+              View Official Term Report Card
+            </button>
+          </div>
           <h2 className="text-2xl font-bold text-slate-900 mt-2">{result.assessment_title}</h2>
           <p className="text-xs text-slate-400 mt-1">
             Submitted on: {new Date(result.submitted_at).toLocaleString()}
@@ -144,6 +204,132 @@ export const StudentResults: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Official Branded Report Card Modal */}
+      {showReportCardModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-3xl w-full p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-600 text-white rounded-xl">
+                  <GraduationCap className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">
+                    {reportCard?.school_name || 'Academic Institution'}
+                  </h3>
+                  <p className="text-xs text-slate-500">Official Student Progress Report & Cumulative Transcript</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="p-2 text-slate-600 hover:text-indigo-600 rounded-lg border border-slate-200 hover:bg-slate-50 transition"
+                  title="Print Report Card"
+                >
+                  <Printer className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setShowReportCardModal(false)}
+                  className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {isLoadingReportCard ? (
+              <div className="p-12 text-center text-slate-400">Loading student transcript records...</div>
+            ) : reportCard ? (
+              <div className="space-y-6">
+                {/* Student Bio Row */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl text-xs">
+                  <div>
+                    <span className="text-slate-400 uppercase font-semibold text-[10px]">Student Name</span>
+                    <div className="font-bold text-slate-900 mt-0.5">{reportCard.student_name}</div>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase font-semibold text-[10px]">Roll Number</span>
+                    <div className="font-bold text-slate-900 mt-0.5">{reportCard.roll_number || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase font-semibold text-[10px]">Class & Section</span>
+                    <div className="font-bold text-slate-900 mt-0.5">{reportCard.class_name} - {reportCard.section_name}</div>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase font-semibold text-[10px]">Term & Year</span>
+                    <div className="font-bold text-slate-900 mt-0.5">{reportCard.term} ({reportCard.academic_year})</div>
+                  </div>
+                </div>
+
+                {/* Subject Grades Table */}
+                <div className="rounded-xl border border-slate-200 overflow-hidden">
+                  <table className="min-w-full divide-y divide-slate-200 text-xs text-left">
+                    <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4">Subject</th>
+                        <th className="py-3 px-4">Max Marks</th>
+                        <th className="py-3 px-4">Obtained</th>
+                        <th className="py-3 px-4">% Score</th>
+                        <th className="py-3 px-4">Grade</th>
+                        <th className="py-3 px-4">Teacher Remark</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {reportCard.subjects.map((sub) => (
+                        <tr key={sub.subject_id} className="hover:bg-slate-50/50">
+                          <td className="py-3 px-4 font-bold text-slate-900">{sub.subject_name}</td>
+                          <td className="py-3 px-4 text-slate-500">{sub.total_max_marks}</td>
+                          <td className="py-3 px-4 font-semibold text-slate-800">{sub.obtained_marks}</td>
+                          <td className="py-3 px-4 font-bold text-indigo-600">{sub.percentage}%</td>
+                          <td className="py-3 px-4">
+                            <span className="px-2 py-0.5 rounded font-bold text-xs bg-indigo-50 text-indigo-700">
+                              {sub.grade}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-600">{sub.remarks}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Cumulative Totals and Remarks */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-4 bg-indigo-50/60 rounded-xl border border-indigo-100 text-center">
+                    <span className="text-xs text-indigo-700 font-semibold uppercase">Overall Aggregate</span>
+                    <div className="text-2xl font-black text-indigo-900 mt-1">
+                      {reportCard.overall_percentage}%
+                    </div>
+                    <span className="text-xs font-bold text-indigo-600">Grade {reportCard.overall_grade}</span>
+                  </div>
+
+                  <div className="p-4 bg-emerald-50/60 rounded-xl border border-emerald-100 text-center">
+                    <span className="text-xs text-emerald-700 font-semibold uppercase">Total Marks</span>
+                    <div className="text-2xl font-black text-emerald-900 mt-1">
+                      {reportCard.total_obtained_marks} / {reportCard.total_possible_marks}
+                    </div>
+                    <span className="text-xs font-bold text-emerald-600">Term Weighted</span>
+                  </div>
+
+                  <div className="p-4 bg-purple-50/60 rounded-xl border border-purple-100 text-center">
+                    <span className="text-xs text-purple-700 font-semibold uppercase">Term Attendance</span>
+                    <div className="text-2xl font-black text-purple-900 mt-1">
+                      {reportCard.attendance_pct}%
+                    </div>
+                    <span className="text-xs font-bold text-purple-600">Regular & Punctual</span>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 space-y-1">
+                  <span className="font-bold text-slate-900 uppercase text-[10px]">Class Teacher Observations:</span>
+                  <p>{reportCard.teacher_general_remarks}</p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

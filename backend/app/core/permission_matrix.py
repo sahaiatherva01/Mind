@@ -80,6 +80,14 @@ class Action:
     REPORT_CARD_VIEW = "report_card.view"
     REPORT_CARD_GENERATE = "report_card.generate"
 
+    # Phase 8: Advanced Non-Parked Workflows
+    EARLY_WARNING_VIEW = "early_warning.view"
+    INTERVENTION_MANAGE = "intervention.manage"
+    SMART_GROUP_MANAGE = "smart_group.manage"
+    SUBSTITUTION_MANAGE = "substitution.manage"
+    STUDENT_GOAL_MANAGE = "student_goal.manage"
+    DOUBT_QUERY_MANAGE = "doubt_query.manage"
+
 
 # Machine-readable permissions contract
 # Maps Action -> Dict of Role -> Required Scope Type
@@ -156,6 +164,14 @@ PERMISSION_MATRIX: Dict[str, Dict[str, str]] = {
     Action.EXAM_PLANNER_MANAGE: {RoleName.ACADEMIC_COORDINATOR: "band", RoleName.SCHOOL_ADMIN: "school", RoleName.PLATFORM_ADMIN: "global"},
     Action.REPORT_CARD_VIEW: {RoleName.STUDENT: "self", RoleName.TEACHER: "assigned_class", RoleName.ACADEMIC_COORDINATOR: "band", RoleName.SCHOOL_ADMIN: "school", RoleName.PLATFORM_ADMIN: "global"},
     Action.REPORT_CARD_GENERATE: {RoleName.SCHOOL_ADMIN: "school", RoleName.ACADEMIC_COORDINATOR: "band", RoleName.TEACHER: "class_teacher", RoleName.PLATFORM_ADMIN: "global"},
+
+    # Phase 8: Advanced Non-Parked Workflows
+    Action.EARLY_WARNING_VIEW: {RoleName.ACADEMIC_COORDINATOR: "band", RoleName.SCHOOL_ADMIN: "school", RoleName.PLATFORM_ADMIN: "global"},
+    Action.INTERVENTION_MANAGE: {RoleName.ACADEMIC_COORDINATOR: "band", RoleName.SCHOOL_ADMIN: "school", RoleName.TEACHER: "assigned_class", RoleName.PLATFORM_ADMIN: "global"},
+    Action.SMART_GROUP_MANAGE: {RoleName.TEACHER: "assigned_class", RoleName.ACADEMIC_COORDINATOR: "band", RoleName.SCHOOL_ADMIN: "school"},
+    Action.SUBSTITUTION_MANAGE: {RoleName.ACADEMIC_COORDINATOR: "band", RoleName.SCHOOL_ADMIN: "school", RoleName.PLATFORM_ADMIN: "global"},
+    Action.STUDENT_GOAL_MANAGE: {RoleName.STUDENT: "self", RoleName.TEACHER: "assigned_class", RoleName.SCHOOL_ADMIN: "school"},
+    Action.DOUBT_QUERY_MANAGE: {RoleName.STUDENT: "self", RoleName.TEACHER: "assigned_class", RoleName.SCHOOL_ADMIN: "school"},
 }
 
 

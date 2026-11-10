@@ -167,3 +167,4 @@ class EvaluationAssistResponse(BaseModel):
     step_breakdown: List[Dict[str, Any]]
     teacher_feedback_note: str
     confidence_score: float
+

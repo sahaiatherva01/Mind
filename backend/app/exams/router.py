@@ -121,3 +121,4 @@ async def get_section_gradebook(
 ):
     """Generate section gradebook matrix across all enrolled students."""
     return await ExamCalendarService.generate_section_gradebook(db, current_user, section_id, term)
+

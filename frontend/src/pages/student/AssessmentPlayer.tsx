@@ -27,6 +27,29 @@ export const AssessmentPlayer: React.FC = () => {
 
   // Timer
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+
+  useEffect(() => {
+    if (!attemptId) return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setTabSwitchCount((prev) => prev + 1);
+        apiRequest(`/attempts/${attemptId}/telemetry`, {
+          method: 'POST',
+          body: JSON.stringify({
+            event_type: 'tab_switch',
+            details: { url: window.location.href },
+          }),
+        }).catch((err) => console.error('Failed to log telemetry', err));
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [attemptId]);
 
   useEffect(() => {
     async function start() {
@@ -185,6 +208,17 @@ export const AssessmentPlayer: React.FC = () => {
           </button>
         </div>
       </header>
+
+      {/* Anti-cheat tab-switch warning banner */}
+      {tabSwitchCount > 0 && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 text-xs font-semibold text-amber-800 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <AlertCircle className="w-4 h-4 text-amber-600" />
+            <span>Anti-Cheat Notice: {tabSwitchCount} window/tab departure(s) logged by proctoring telemetry.</span>
+          </div>
+          <span className="text-[11px] text-amber-700">Exam activity is monitored.</span>
+        </div>
+      )}
 
       {/* Main Examination View */}
       <div className="flex-1 max-w-5xl w-full mx-auto p-6 flex flex-col md:flex-row gap-6">
