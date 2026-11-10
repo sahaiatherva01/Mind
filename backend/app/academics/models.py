@@ -16,10 +16,16 @@ class Class(UUIDBase, TenantMixin):
     academic_year_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("academic_years.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    band_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("bands.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     name: Mapped[str] = mapped_column(String(50), nullable=False)  # e.g., "Class 11", "Class 12"
+    grade_level: Mapped[Optional[int]] = mapped_column(nullable=True)  # e.g., 11, 12
 
     academic_year: Mapped["AcademicYear"] = relationship("AcademicYear", back_populates="classes")  # type: ignore # noqa: F821
+    band: Mapped[Optional["Band"]] = relationship("Band", back_populates="classes")  # type: ignore # noqa: F821
     sections: Mapped[List["Section"]] = relationship("Section", back_populates="class_obj", cascade="all, delete-orphan")
+
 
 
 class Section(UUIDBase):
@@ -69,6 +75,11 @@ class TeacherAssignment(UUIDBase, TenantMixin):
     subject_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("subjects.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    academic_year_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("academic_years.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    is_class_teacher: Mapped[bool] = mapped_column(default=False, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)  # active, inactive
 
     teacher: Mapped["User"] = relationship("User")  # type: ignore # noqa: F821
     class_obj: Mapped["Class"] = relationship("Class")
@@ -86,6 +97,9 @@ class StudentEnrollment(UUIDBase, TenantMixin):
     student_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    academic_year_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("academic_years.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     class_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("classes.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -98,6 +112,7 @@ class StudentEnrollment(UUIDBase, TenantMixin):
     student: Mapped["User"] = relationship("User")  # type: ignore # noqa: F821
     class_obj: Mapped["Class"] = relationship("Class")
     section: Mapped["Section"] = relationship("Section")
+
 
 
 class CurriculumNode(UUIDBase, TenantMixin):

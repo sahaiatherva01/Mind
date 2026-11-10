@@ -66,21 +66,44 @@ async def get_current_user(
     return user
 
 
+from backend.app.identity.models import User, RoleName
+from backend.app.core.policies import authorize
+from backend.app.core.permission_matrix import Action
+
+
 def require_role(allowed_roles: Union[str, List[str]]):
     if isinstance(allowed_roles, str):
-        roles = [allowed_roles]
+        target_roles = {allowed_roles}
     else:
-        roles = allowed_roles
+        target_roles = set(allowed_roles)
+
+    # Expand legacy aliases for backward compatibility
+    if "admin" in target_roles:
+        target_roles.update([RoleName.PLATFORM_ADMIN, RoleName.SCHOOL_ADMIN])
 
     async def role_checker(current_user: User = Depends(get_current_user)) -> User:
-        if current_user.role not in roles:
+        user_roles = {r.role for r in current_user.role_assignments if r.status == "active"}
+        if not user_roles.intersection(target_roles):
             raise ForbiddenException(
-                f"Action requires one of the following roles: {', '.join(roles)}. "
-                f"Your role is '{current_user.role}'."
+                f"Action requires one of the following roles: {', '.join(sorted(target_roles))}. "
+                f"Your active roles are: {', '.join(sorted(user_roles)) or 'none'}."
             )
         return current_user
 
     return role_checker
+
+
+def require_permission(action: str):
+    """Dependency that authorizes an action using the central policy engine."""
+    async def permission_checker(
+        current_user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db)
+    ) -> User:
+        await authorize(current_user, action, db=db)
+        return current_user
+
+    return permission_checker
+
 
 
 async def get_active_school_id(current_user: User = Depends(get_current_user)) -> str:
