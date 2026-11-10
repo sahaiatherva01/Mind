@@ -136,7 +136,6 @@ async def test_exam_clash_detection_and_policy_limits(
         await db_session.flush()
 
         sched = Schedule(
-            school_id=school.id,
             assessment_id=asmt.id,
             starts_at=slot,
             ends_at=slot + timedelta(hours=1),
@@ -245,7 +244,9 @@ async def test_evaluation_assistant_agent_track_a3(
     # 1. Seed assessment & question
     q = Question(
         school_id=school.id,
+        author_id=teacher.id,
         subject_id=sub_math.id,
+        category="subjective",
         type="short_answer",
         prompt="State Lagrange's Mean Value Theorem and explain its geometric interpretation.",
         marks=4.0,
