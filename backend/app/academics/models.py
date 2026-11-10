@@ -1,8 +1,9 @@
 """
 Academic Models: Class, Section, Subject, TeacherAssignment, StudentEnrollment, CurriculumNode
 """
-from typing import List, Optional
-from sqlalchemy import String, ForeignKey, Index, UniqueConstraint
+from datetime import datetime
+from typing import List, Optional, Dict, Any
+from sqlalchemy import String, ForeignKey, Index, UniqueConstraint, JSON, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.app.core.db import UUIDBase, TenantMixin
 
@@ -38,6 +39,7 @@ class Section(UUIDBase):
         String(36), ForeignKey("classes.id", ondelete="CASCADE"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(String(20), nullable=False)  # e.g., "A", "E", "D"
+    roster_status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)  # pending, verified, locked
 
     class_obj: Mapped["Class"] = relationship("Class", back_populates="sections")
 
@@ -92,6 +94,7 @@ class StudentEnrollment(UUIDBase, TenantMixin):
     __table_args__ = (
         UniqueConstraint("school_id", "student_id", "class_id", "section_id", name="uq_student_enrollment"),
         Index("ix_student_enrollment_lookup", "school_id", "student_id"),
+        Index("ix_student_enrollment_roll", "school_id", "section_id", "roll_number"),
     )
 
     student_id: Mapped[str] = mapped_column(
@@ -133,4 +136,28 @@ class CurriculumNode(UUIDBase, TenantMixin):
     source_ref: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     subject: Mapped["Subject"] = relationship("Subject")
+
+
+class RosterChangeRequest(UUIDBase, TenantMixin):
+    __tablename__ = "roster_change_requests"
+    __table_args__ = (
+        Index("ix_roster_requests_lookup", "school_id", "section_id", "status"),
+    )
+
+    section_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("sections.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    requested_by_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    change_type: Mapped[str] = mapped_column(String(50), nullable=False)  # add_student, remove_student, update_roll
+    student_data: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    reason: Mapped[str] = mapped_column(String(500), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)  # pending, approved, rejected
+    reviewed_by_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    review_notes: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+    section: Mapped["Section"] = relationship("Section")
+    requested_by: Mapped["User"] = relationship("User", foreign_keys=[requested_by_id])
 
