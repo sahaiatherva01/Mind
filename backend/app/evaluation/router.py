@@ -110,3 +110,14 @@ async def release_results_endpoint(
         "status": "results_released",
     }
 
+
+@eval_router.post("/evaluations/{response_id}/ai-assist")
+async def ai_assist_evaluation_endpoint(
+    response_id: str,
+    current_user: User = Depends(require_role([UserRole.TEACHER, UserRole.ADMIN])),
+    db: AsyncSession = Depends(get_db),
+):
+    """Subjective Evaluation Assistant (Agent Track A3): generates score suggestions and rubric breakdown."""
+    from backend.app.exams.service import ExamCalendarService
+    return await ExamCalendarService.get_evaluation_assistance(db, current_user, response_id)
+

@@ -19,6 +19,11 @@ class AutosavePayload(BaseModel):
     answer_json: Dict[str, Any]
 
 
+class ExamTelemetryPayload(BaseModel):
+    event_type: str  # "tab_switch", "fullscreen_exit", "offline_reconnect"
+    details: Optional[Dict[str, Any]] = None
+
+
 @student_router.get("/assignments")
 async def get_my_assignments(
     current_user: User = Depends(get_current_user),
@@ -113,4 +118,39 @@ async def get_attempt_results_endpoint(
         attempt_id=attempt_id,
         student_id=current_user.id,
     )
+
+
+@attempts_router.post("/{attempt_id}/telemetry")
+async def record_attempt_telemetry_endpoint(
+    attempt_id: str,
+    payload: ExamTelemetryPayload,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Logs anti-cheat telemetry: tab switches, fullscreen departures, and offline recovery."""
+    from datetime import datetime, timezone
+    from backend.app.assessments.models import Attempt
+    from backend.app.core.errors import ForbiddenException, NotFoundException
+
+    attempt = await db.get(Attempt, attempt_id)
+    if not attempt or attempt.student_id != current_user.id:
+        raise ForbiddenException("Access denied to this attempt telemetry.")
+
+    if payload.event_type == "tab_switch":
+        attempt.tab_switches_count += 1
+
+    events = list(attempt.integrity_events_json or [])
+    events.append({
+        "event_type": payload.event_type,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "details": payload.details or {},
+    })
+    attempt.integrity_events_json = events
+    await db.flush()
+
+    return {
+        "status": "recorded",
+        "tab_switches_count": attempt.tab_switches_count,
+        "total_integrity_events": len(events),
+    }
 
