@@ -119,12 +119,11 @@ async def create_and_distribute_material(
     await record_audit_event(
         db=db,
         school_id=actor.school_id,
-        actor_id=actor.id,
         action="material.upload",
-        resource_type="material",
-        resource_id=material.id,
-        before_state=None,
-        after_state={
+        entity_type="material",
+        entity_id=material.id,
+        actor_id=actor.id,
+        metadata_json={
             "title": material.title,
             "class_id": material.class_id,
             "subject_id": material.subject_id,
@@ -299,12 +298,11 @@ async def delete_material(
     await record_audit_event(
         db=db,
         school_id=actor.school_id,
-        actor_id=actor.id,
         action="material.archive",
-        resource_type="material",
-        resource_id=material_id,
-        before_state={"status": "active"},
-        after_state={"status": "archived"},
+        entity_type="material",
+        entity_id=material_id,
+        actor_id=actor.id,
+        metadata_json={"before_status": "active", "after_status": "archived"},
     )
 
 
@@ -461,12 +459,11 @@ async def record_student_open_event(
     await record_audit_event(
         db=db,
         school_id=student.school_id,
-        actor_id=student.id,
         action="material.open",
-        resource_type="material",
-        resource_id=material_id,
-        before_state=None,
-        after_state={
+        entity_type="material",
+        entity_id=material_id,
+        actor_id=student.id,
+        metadata_json={
             "duration_seconds": duration_seconds,
             "pages_read": pages_read,
             "section_id": matching_enrollment.section_id,
@@ -522,12 +519,11 @@ async def trigger_question_extraction(
     await record_audit_event(
         db=db,
         school_id=actor.school_id,
-        actor_id=actor.id,
         action="question.extract",
-        resource_type="material",
-        resource_id=material_id,
-        before_state=None,
-        after_state={"job_id": job.id, "extracted_count": len(candidates)},
+        entity_type="material",
+        entity_id=material_id,
+        actor_id=actor.id,
+        metadata_json={"job_id": job.id, "extracted_count": len(candidates)},
     )
 
     return job
@@ -573,12 +569,11 @@ async def approve_extracted_question(
     await record_audit_event(
         db=db,
         school_id=actor.school_id,
-        actor_id=actor.id,
         action="question.approve",
-        resource_type="question",
-        resource_id=q.id,
-        before_state={"candidate_id": payload.candidate_question_id, "status": "needs_review"},
-        after_state={"question_id": q.id, "status": "active"},
+        entity_type="question",
+        entity_id=q.id,
+        actor_id=actor.id,
+        metadata_json={"candidate_id": payload.candidate_question_id, "status": "active"},
     )
 
     return q

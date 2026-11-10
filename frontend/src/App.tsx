@@ -23,9 +23,11 @@ import { AssessmentEditor } from './pages/teacher/AssessmentEditor';
 import { TeacherAssessments } from './pages/teacher/TeacherAssessments';
 import { TeacherEvaluationQueue } from './pages/teacher/TeacherEvaluationQueue';
 import { TeacherAnalytics } from './pages/teacher/TeacherAnalytics';
+import { TeacherMaterials } from './pages/teacher/TeacherMaterials';
 
 // Student Pages
 import { StudentDashboard } from './pages/student/StudentDashboard';
+import { StudentMyLearning } from './pages/student/StudentMyLearning';
 import { StudentUpcomingTests } from './pages/student/StudentUpcomingTests';
 import { AssessmentPlayer } from './pages/student/AssessmentPlayer';
 import { StudentResults } from './pages/student/StudentResults';
@@ -203,6 +205,14 @@ export const App: React.FC = () => {
               }
             />
             <Route
+              path="/teacher/materials"
+              element={
+                <ProtectedRoute allowedRoles={teacherRoles}>
+                  <TeacherMaterials />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/teacher/analytics"
               element={
                 <ProtectedRoute allowedRoles={teacherRoles}>
@@ -217,6 +227,14 @@ export const App: React.FC = () => {
               element={
                 <ProtectedRoute allowedRoles={studentRoles}>
                   <StudentDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/my-learning"
+              element={
+                <ProtectedRoute allowedRoles={studentRoles}>
+                  <StudentMyLearning />
                 </ProtectedRoute>
               }
             />

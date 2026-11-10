@@ -14,6 +14,7 @@ import {
   School as SchoolIcon,
   CheckCircle,
   Layers,
+  FileText,
 } from 'lucide-react';
 
 export const DashboardLayout: React.FC = () => {
@@ -233,6 +234,17 @@ export const DashboardLayout: React.FC = () => {
                 My Classes
               </NavLink>
               <NavLink
+                to="/teacher/materials"
+                className={({ isActive }) =>
+                  `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`
+                }
+              >
+                <FileText className="w-4 h-4 mr-3" />
+                Materials & PDFs
+              </NavLink>
+              <NavLink
                 to="/teacher/ai-studio"
                 className={({ isActive }) =>
                   `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -294,6 +306,17 @@ export const DashboardLayout: React.FC = () => {
                 }
               >
                 <LayoutDashboard className="w-4 h-4 mr-3" />
+                Dashboard
+              </NavLink>
+              <NavLink
+                to="/student/my-learning"
+                className={({ isActive }) =>
+                  `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`
+                }
+              >
+                <BookOpen className="w-4 h-4 mr-3" />
                 My Learning
               </NavLink>
               <NavLink

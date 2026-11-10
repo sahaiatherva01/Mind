@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { apiRequest } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { FileCheck, CheckCircle2, Clock } from 'lucide-react';
+import { FileCheck, CheckCircle2, Clock, BookOpen, ArrowRight } from 'lucide-react';
 
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -61,6 +62,28 @@ export const StudentDashboard: React.FC = () => {
             <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Released Results</div>
           </div>
         </div>
+      </div>
+
+      {/* My Learning Quick Banner */}
+      <div className="bg-gradient-to-r from-indigo-900 to-slate-900 text-white rounded-xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center space-x-4">
+          <div className="p-3 bg-white/10 rounded-lg text-indigo-300">
+            <BookOpen className="w-7 h-7" />
+          </div>
+          <div>
+            <h3 className="font-bold text-base text-white">Curriculum Notes & Reference Guides</h3>
+            <p className="text-xs text-slate-300 mt-0.5">
+              Access handouts, chapter notes, and learning materials distributed to your class section.
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/student/my-learning"
+          className="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium text-xs hover:bg-indigo-500 transition shadow-sm whitespace-nowrap self-start sm:self-auto"
+        >
+          <span>Open My Learning</span>
+          <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+        </Link>
       </div>
 
       {/* Assigned Assessments Container */}

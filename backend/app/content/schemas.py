@@ -22,7 +22,7 @@ class MaterialCreate(BaseModel):
 
 
 class MaterialDistributionUpdate(BaseModel):
-    target_section_ids: List[str] = Field(..., min_items=1)
+    target_section_ids: List[str] = Field(..., min_length=1)
 
 
 class MaterialOut(BaseModel):
