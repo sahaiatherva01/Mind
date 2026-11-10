@@ -38,8 +38,6 @@ class User(UUIDBase):
     __tablename__ = "users"
     __table_args__ = (
         UniqueConstraint("school_id", "email", name="uq_school_user_email"),
-        Index("ix_users_email", "email"),
-        Index("ix_users_school", "school_id"),
     )
 
     # school_id is nullable strictly for Platform Admins (who control cross-school)
@@ -56,7 +54,7 @@ class User(UUIDBase):
     # Relationships
     school: Mapped[Optional["School"]] = relationship("School", back_populates="users")  # type: ignore # noqa: F821
     role_assignments: Mapped[List["RoleAssignment"]] = relationship(
-        "RoleAssignment", back_populates="user", cascade="all, delete-orphan", lazy="selectin"
+        "RoleAssignment", back_populates="user", cascade="all, delete-orphan"
     )
     sessions: Mapped[List["Session"]] = relationship("Session", back_populates="user", cascade="all, delete-orphan")
     reset_tokens: Mapped[List["PasswordResetToken"]] = relationship(
@@ -66,7 +64,10 @@ class User(UUIDBase):
     @property
     def primary_role(self) -> str:
         """Determines effective highest role for navigation and display."""
-        active_assignments = [r for r in self.role_assignments if r.status == "active"]
+        assignments = self.__dict__.get("role_assignments", [])
+        if not assignments:
+            return RoleName.STUDENT
+        active_assignments = [r for r in assignments if getattr(r, "status", None) == "active"]
         roles = {r.role for r in active_assignments}
         if RoleName.PLATFORM_ADMIN in roles:
             return RoleName.PLATFORM_ADMIN

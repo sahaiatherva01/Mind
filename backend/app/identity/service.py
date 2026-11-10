@@ -4,6 +4,7 @@ Identity Business Logic Service
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Tuple
 from sqlalchemy import select, and_
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.core.config import settings
 from backend.app.core.errors import (
@@ -53,6 +54,14 @@ async def authenticate_user(
 
     if user.status != "active":
         raise UnauthorizedException("Your account is currently disabled. Please contact your administrator.")
+
+    ra_stmt = select(RoleAssignment).where(
+        RoleAssignment.user_id == user.id,
+        RoleAssignment.status == "active"
+    )
+    ra_res = await db.execute(ra_stmt)
+    user.role_assignments = list(ra_res.scalars().all())
+    user._cached_role_assignments = user.role_assignments
 
     return user
 
@@ -185,37 +194,53 @@ async def complete_password_reset(
 
 async def create_user(
     db: AsyncSession,
-    school_id: str,
+    school_id: Optional[str],
     data: UserCreateRequest,
     actor_id: Optional[str] = None
 ) -> User:
-    # Check duplicate email within school
     email_clean = data.email.lower().strip()
-    stmt = select(User).where(User.school_id == school_id, User.email == email_clean)
+    if school_id:
+        stmt = select(User).where(User.school_id == school_id, User.email == email_clean)
+    else:
+        stmt = select(User).where(User.email == email_clean)
     res = await db.execute(stmt)
     if res.scalar_one_or_none():
-        raise ConflictException(f"A user with email '{email_clean}' already exists in this school")
+        raise ConflictException(f"A user with email '{email_clean}' already exists")
+
+    canonical_role = canonicalize_role(data.role)
 
     new_user = User(
         school_id=school_id,
         email=email_clean,
         password_hash=hash_password(data.password),
         full_name=data.full_name.strip(),
-        role=data.role,
         designation=data.designation,
         status="active",
+        must_change_password=(canonical_role == RoleName.STUDENT),
     )
     db.add(new_user)
     await db.flush()
 
+    role_assignment = RoleAssignment(
+        user_id=new_user.id,
+        role=canonical_role,
+        school_id=school_id,
+        band_id=data.band_id,
+        status="active",
+    )
+    db.add(role_assignment)
+    await db.flush()
+
+    new_user.role_assignments.append(role_assignment)
+
     await record_audit_event(
         db=db,
-        school_id=school_id,
+        school_id=school_id or "PLATFORM",
         actor_id=actor_id,
         action="user.created",
         entity_type="user",
         entity_id=new_user.id,
-        metadata_json={"role": new_user.role, "email": new_user.email},
+        metadata_json={"role": canonical_role, "email": new_user.email},
     )
 
     return new_user
@@ -229,8 +254,12 @@ async def list_school_users(
 ) -> List[User]:
     stmt = select(User).where(User.school_id == school_id)
     if role:
-        stmt = stmt.where(User.role == role)
+        canonical_role = canonicalize_role(role)
+        stmt = stmt.join(RoleAssignment, User.id == RoleAssignment.user_id).where(
+            RoleAssignment.role == canonical_role,
+            RoleAssignment.status == "active"
+        )
     stmt = stmt.order_by(User.full_name).limit(limit)
     result = await db.execute(stmt)
-    return list(result.scalars().all())
+    return list(result.scalars().unique().all())
 

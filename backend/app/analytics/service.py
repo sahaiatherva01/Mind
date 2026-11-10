@@ -5,7 +5,7 @@ from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload, joinedload
 from fastapi import HTTPException, status
 
-from backend.app.identity.models import User, UserRole
+from backend.app.identity.models import User, UserRole, RoleName
 from backend.app.academics.models import (
     Class,
     Section,
@@ -39,9 +39,9 @@ class AnalyticsService:
         db: AsyncSession, user: User, class_id: str
     ) -> bool:
         """Admins have access to all classes in tenant. Teachers only if assigned to a section."""
-        if user.role == UserRole.ADMIN:
+        if user.role in (UserRole.ADMIN, RoleName.PLATFORM_ADMIN, RoleName.SCHOOL_ADMIN, "admin"):
             return True
-        if user.role != UserRole.TEACHER:
+        if user.role != UserRole.TEACHER and RoleName.TEACHER not in [r.role for r in user.role_assignments if r.status == "active"]:
             return False
 
         q = (
@@ -63,9 +63,9 @@ class AnalyticsService:
         db: AsyncSession, user: User, assessment: Assessment
     ) -> bool:
         """Admins have access to all assessments in tenant. Teachers only if assigned to class+subject."""
-        if user.role == UserRole.ADMIN:
+        if user.role in (UserRole.ADMIN, RoleName.PLATFORM_ADMIN, RoleName.SCHOOL_ADMIN, "admin"):
             return True
-        if user.role != UserRole.TEACHER:
+        if user.role != UserRole.TEACHER and RoleName.TEACHER not in [r.role for r in user.role_assignments if r.status == "active"]:
             return False
 
         q = (
@@ -507,7 +507,7 @@ class AnalyticsService:
     async def get_teacher_dashboard_summary(
         db: AsyncSession, user: User
     ) -> TeacherDashboardSummary:
-        if user.role != UserRole.TEACHER:
+        if user.role != UserRole.TEACHER and RoleName.TEACHER not in [r.role for r in user.role_assignments if r.status == "active"]:
             return TeacherDashboardSummary(
                 assigned_classes_count=0,
                 active_assessments_count=0,

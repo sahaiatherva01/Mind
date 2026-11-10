@@ -13,6 +13,7 @@ from backend.app.core.logging import get_logger
 # Domain Routers
 from backend.app.identity.router import auth_router, user_router
 from backend.app.tenancy.router import router as tenancy_router
+from backend.app.tenancy.platform_router import router as platform_router
 from backend.app.academics.router import (
     classes_router,
     subjects_router,
@@ -75,6 +76,7 @@ register_exception_handlers(app)
 api_v1_prefix = "/api/v1"
 app.include_router(auth_router, prefix=api_v1_prefix)
 app.include_router(user_router, prefix=api_v1_prefix)
+app.include_router(platform_router, prefix=api_v1_prefix)
 app.include_router(tenancy_router, prefix=api_v1_prefix)
 app.include_router(classes_router, prefix=api_v1_prefix)
 app.include_router(subjects_router, prefix=api_v1_prefix)

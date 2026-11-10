@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from typing import Optional, List, Union
 from fastapi import Depends, Request, Header, Cookie
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.core.config import settings
 from backend.app.core.db import get_db
@@ -63,10 +64,19 @@ async def get_current_user(
     if not user or user.status != "active":
         raise UnauthorizedException("User account is inactive or not found")
 
+    # Fetch active role assignments
+    ra_stmt = select(RoleAssignment).where(
+        RoleAssignment.user_id == user.id,
+        RoleAssignment.status == "active"
+    )
+    ra_res = await db.execute(ra_stmt)
+    user.role_assignments = list(ra_res.scalars().all())
+    user._cached_role_assignments = user.role_assignments
+
     return user
 
 
-from backend.app.identity.models import User, RoleName
+from backend.app.identity.models import User, RoleName, RoleAssignment
 from backend.app.core.policies import authorize
 from backend.app.core.permission_matrix import Action
 

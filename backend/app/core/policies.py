@@ -31,7 +31,7 @@ def verify_tenant_boundary(user: User, resource_school_id: Optional[str]) -> Non
     if not resource_school_id:
         return
     # Platform admins have no school and can access cross-tenant
-    if RoleName.PLATFORM_ADMIN in [r.role for r in user.role_assignments if r.status == "active"]:
+    if user.primary_role == RoleName.PLATFORM_ADMIN:
         return
     if user.school_id != resource_school_id:
         raise TenantMismatchException("Cross-tenant access strictly denied")
@@ -54,9 +54,20 @@ async def authorize(
     if not action_rules:
         raise ForbiddenException(f"Unknown or unconfigured system action '{action}'")
 
-    active_assignments = [r for r in actor.role_assignments if r.status == "active"]
+    active_assignments = []
+    if "role_assignments" in actor.__dict__ and actor.__dict__["role_assignments"]:
+        active_assignments = [r for r in actor.__dict__["role_assignments"] if r.status == "active"]
+    elif db:
+        res = await db.execute(
+            select(RoleAssignment).where(RoleAssignment.user_id == actor.id, RoleAssignment.status == "active")
+        )
+        active_assignments = list(res.scalars().all())
+    elif hasattr(actor, "_cached_role_assignments") and actor._cached_role_assignments:
+        active_assignments = [r for r in actor._cached_role_assignments if r.status == "active"]
+
     if not active_assignments:
         raise ForbiddenException("User has no active role assignments")
+
 
     # Extract resource scope identifiers
     res_school_id = _extract_attr(resource, "school_id") or actor.school_id

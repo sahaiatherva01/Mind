@@ -1,21 +1,16 @@
 """
-Academics Authorization Policies
-Enforces that:
-- Admin manages school setup, classes, sections, subjects, assignments, enrollments.
-- Teacher can only view assigned classes/sections/subjects.
-- Student can only view their enrolled class/section.
+Academics Authorization Policies — Mind V2
 """
 from backend.app.core.errors import ForbiddenException
-from backend.app.identity.models import User
+from backend.app.identity.models import User, RoleName
 
 
 def can_manage_academic_setup(user: User) -> bool:
-    if user.role != "admin":
-        raise ForbiddenException("Only school administrators can modify academic structures and assignments")
-    return True
+    roles = {r.role for r in user.role_assignments if r.status == "active"}
+    if RoleName.PLATFORM_ADMIN in roles or RoleName.SCHOOL_ADMIN in roles:
+        return True
+    raise ForbiddenException("Only school administrators can modify academic structures and assignments")
 
 
 def can_view_academics(user: User) -> bool:
-    # All authenticated users can view basic academic catalogue within their school
     return True
-

@@ -101,28 +101,32 @@ async def get_me(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(School).where(School.id == current_user.school_id)
-    res = await db.execute(stmt)
-    school = res.scalar_one()
+    school = None
+    active_year = None
 
-    # Active academic year if any
-    year_stmt = select(AcademicYear).where(
-        AcademicYear.school_id == current_user.school_id,
-        AcademicYear.status == "active"
-    ).limit(1)
-    year_res = await db.execute(year_stmt)
-    active_year = year_res.scalar_one_or_none()
+    if current_user.school_id:
+        stmt = select(School).where(School.id == current_user.school_id)
+        res = await db.execute(stmt)
+        school = res.scalar_one_or_none()
+
+        # Active academic year if any
+        year_stmt = select(AcademicYear).where(
+            AcademicYear.school_id == current_user.school_id,
+            AcademicYear.status == "active"
+        ).limit(1)
+        year_res = await db.execute(year_stmt)
+        active_year = year_res.scalar_one_or_none()
 
     return MeResponse(
         user=UserResponse.model_validate(current_user),
-        school=SchoolSummaryResponse.model_validate(school),
+        school=SchoolSummaryResponse.model_validate(school) if school else None,
         active_academic_year_id=active_year.id if active_year else None,
     )
 
 
 @user_router.get("", response_model=List[UserResponse])
 async def list_users(
-    role: Optional[str] = Query(None, pattern="^(admin|teacher|student)$"),
+    role: Optional[str] = Query(None, pattern="^(platform_admin|school_admin|academic_coordinator|teacher|student|admin)$"),
     limit: int = Query(100, ge=1, le=500),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -130,6 +134,7 @@ async def list_users(
     policies.can_manage_users(current_user)
     users = await service.list_school_users(db, current_user.school_id, role=role, limit=limit)
     return [UserResponse.model_validate(u) for u in users]
+
 
 
 @user_router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)

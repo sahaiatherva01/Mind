@@ -16,7 +16,7 @@ from backend.app.core.errors import (
     ForbiddenException,
 )
 from backend.app.core.security import hash_password
-from backend.app.identity.models import User
+from backend.app.identity.models import User, RoleAssignment, RoleName
 from backend.app.tenancy.models import AcademicYear
 from backend.app.academics.models import (
     Class,
@@ -229,8 +229,10 @@ async def create_teacher_assignment(
     user_stmt = select(User).where(User.id == data.teacher_id, User.school_id == school_id)
     u_res = await db.execute(user_stmt)
     teacher = u_res.scalar_one_or_none()
-    if not teacher or teacher.role not in ("teacher", "admin"):
+    teacher_roles = [r.role for r in teacher.role_assignments if r.status == "active"] if teacher else []
+    if not teacher or not ({"teacher", "admin", "school_admin", "academic_coordinator"}.intersection(teacher_roles) or teacher.role in ("teacher", "admin", "school_admin")):
         raise ValidationException("Assigned user must exist and have role 'teacher' or 'admin'")
+
 
     # Check duplicate assignment
     dup_stmt = select(TeacherAssignment).where(
@@ -480,16 +482,20 @@ async def process_bulk_import_file(
             errors.append(BulkImportRowError(row_number=row_num, data=d, error="Missing required email or full_name"))
             continue
 
-        # Map role according to DEC-001 (strict 3 roles: admin, teacher, student)
-        canonical_role = "student"
-        if "admin" in raw_role or "coordinator" in raw_role or "principal" in raw_role or "head" in raw_role:
-            canonical_role = "admin"
-            if not designation and ("coordinator" in raw_role or "academic coordinator" in raw_role):
+        # Map role according to 5-tier structure
+        canonical_role = RoleName.STUDENT
+        if "superadmin" in raw_role or "platform" in raw_role:
+            canonical_role = RoleName.PLATFORM_ADMIN
+        elif "admin" in raw_role or "principal" in raw_role or "head" in raw_role:
+            canonical_role = RoleName.SCHOOL_ADMIN
+        elif "coordinator" in raw_role:
+            canonical_role = RoleName.ACADEMIC_COORDINATOR
+            if not designation:
                 designation = "Academic Coordinator"
         elif "teach" in raw_role or "faculty" in raw_role:
-            canonical_role = "teacher"
+            canonical_role = RoleName.TEACHER
         elif "student" in raw_role:
-            canonical_role = "student"
+            canonical_role = RoleName.STUDENT
         else:
             errors.append(BulkImportRowError(row_number=row_num, data=d, error=f"Unrecognized role '{raw_role}'"))
             continue
@@ -506,12 +512,23 @@ async def process_bulk_import_file(
                     email=email,
                     password_hash=hash_password("ChangeMe123!"),
                     full_name=full_name,
-                    role=canonical_role,
                     designation=designation or None,
                     status="active",
+                    must_change_password=(canonical_role == RoleName.STUDENT),
                 )
                 db.add(user)
                 await db.flush()
+
+                role_asgn = RoleAssignment(
+                    user_id=user.id,
+                    role=canonical_role,
+                    school_id=school_id,
+                    status="active"
+                )
+                db.add(role_asgn)
+                await db.flush()
+                user.role_assignments.append(role_asgn)
+
 
             # Handle class and section if provided
             if class_name and active_year:
@@ -542,7 +559,7 @@ async def process_bulk_import_file(
                         await db.flush()
 
                 # If student, enroll
-                if canonical_role == "student" and sec_obj:
+                if canonical_role in (RoleName.STUDENT, "student") and sec_obj:
                     enr_stmt = select(StudentEnrollment).where(
                         StudentEnrollment.school_id == school_id,
                         StudentEnrollment.student_id == user.id,
@@ -563,7 +580,7 @@ async def process_bulk_import_file(
                         await db.flush()
 
                 # If teacher and subject given, assign
-                if canonical_role == "teacher" and sec_obj and subject_code:
+                if canonical_role in (RoleName.TEACHER, "teacher") and sec_obj and subject_code:
                     sub_stmt = select(Subject).where(Subject.school_id == school_id, Subject.code == subject_code)
                     sub_res = await db.execute(sub_stmt)
                     sub_obj = sub_res.scalar_one_or_none()

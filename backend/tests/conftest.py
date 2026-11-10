@@ -61,15 +61,21 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 @pytest_asyncio.fixture(scope="function")
 async def seeded_test_data(db_session: AsyncSession):
     from datetime import date
-    from backend.app.tenancy.models import School, AcademicYear
-    from backend.app.identity.models import User
+    from backend.app.tenancy.models import School, AcademicYear, Band
+    from backend.app.identity.models import User, RoleAssignment, RoleName
     from backend.app.academics.models import Class, Section, Subject, TeacherAssignment, StudentEnrollment
 
     # School 1 (Primary)
-    school1 = School(name="Springfield Academy", slug="springfield", timezone="Asia/Kolkata")
+    school1 = School(name="Springfield Academy", slug="springfield", code="SPF", timezone="Asia/Kolkata")
     # School 2 (Second Tenant for Cross-Tenant tests)
-    school2 = School(name="Shelbyville High", slug="shelbyville", timezone="Asia/Kolkata")
+    school2 = School(name="Shelbyville High", slug="shelbyville", code="SHB", timezone="Asia/Kolkata")
     db_session.add_all([school1, school2])
+    await db_session.flush()
+
+    # Bands for School 1
+    band_middle = Band(school_id=school1.id, name="Middle School (6-8)", min_grade=6, max_grade=8)
+    band_senior = Band(school_id=school1.id, name="Senior Secondary (11-12)", min_grade=11, max_grade=12)
+    db_session.add_all([band_middle, band_senior])
     await db_session.flush()
 
     # Academic Year
@@ -78,13 +84,28 @@ async def seeded_test_data(db_session: AsyncSession):
     db_session.add_all([year1, year2])
     await db_session.flush()
 
+    # Platform Admin (Global, no school)
+    platform_admin = User(
+        school_id=None,
+        email="platform.admin@mind.local",
+        password_hash=hash_password("PlatformPass123!"),
+        full_name="Platform Overseer",
+        status="active"
+    )
+
     # Users for School 1
     admin1 = User(
         school_id=school1.id,
         email="admin@school1.org",
         password_hash=hash_password("AdminPass123!"),
         full_name="Admin One",
-        role="admin",
+        status="active"
+    )
+    coord1 = User(
+        school_id=school1.id,
+        email="coordinator@school1.org",
+        password_hash=hash_password("CoordPass123!"),
+        full_name="Coordinator Senior",
         status="active"
     )
     teacher1 = User(
@@ -92,7 +113,6 @@ async def seeded_test_data(db_session: AsyncSession):
         email="teacher1@school1.org",
         password_hash=hash_password("TeacherPass123!"),
         full_name="Maths Teacher",
-        role="teacher",
         status="active"
     )
     student1 = User(
@@ -100,7 +120,6 @@ async def seeded_test_data(db_session: AsyncSession):
         email="student1@school1.org",
         password_hash=hash_password("StudentPass123!"),
         full_name="Student One",
-        role="student",
         status="active"
     )
 
@@ -110,12 +129,30 @@ async def seeded_test_data(db_session: AsyncSession):
         email="admin@school2.org",
         password_hash=hash_password("AdminPass123!"),
         full_name="Admin Two",
-        role="admin",
         status="active"
     )
 
-    db_session.add_all([admin1, teacher1, student1, admin2])
+    db_session.add_all([platform_admin, admin1, coord1, teacher1, student1, admin2])
     await db_session.flush()
+
+    # Role Assignments
+    ra_platform = RoleAssignment(user_id=platform_admin.id, role=RoleName.PLATFORM_ADMIN, school_id=None, status="active")
+    ra_admin1 = RoleAssignment(user_id=admin1.id, role=RoleName.SCHOOL_ADMIN, school_id=school1.id, status="active")
+    ra_coord1 = RoleAssignment(user_id=coord1.id, role=RoleName.ACADEMIC_COORDINATOR, school_id=school1.id, band_id=band_senior.id, status="active")
+    ra_teacher1 = RoleAssignment(user_id=teacher1.id, role=RoleName.TEACHER, school_id=school1.id, status="active")
+    ra_student1 = RoleAssignment(user_id=student1.id, role=RoleName.STUDENT, school_id=school1.id, status="active")
+    ra_admin2 = RoleAssignment(user_id=admin2.id, role=RoleName.SCHOOL_ADMIN, school_id=school2.id, status="active")
+
+    db_session.add_all([ra_platform, ra_admin1, ra_coord1, ra_teacher1, ra_student1, ra_admin2])
+    await db_session.flush()
+
+    platform_admin.role_assignments.append(ra_platform)
+    admin1.role_assignments.append(ra_admin1)
+    coord1.role_assignments.append(ra_coord1)
+    teacher1.role_assignments.append(ra_teacher1)
+    student1.role_assignments.append(ra_student1)
+    admin2.role_assignments.append(ra_admin2)
+
 
     # Academics for School 1
     class_11 = Class(school_id=school1.id, academic_year_id=year1.id, name="Class 11")
@@ -164,13 +201,29 @@ async def seeded_test_data(db_session: AsyncSession):
 
     await db_session.commit()
 
+    # Explicitly attach role_assignments to returned user objects
+    from sqlalchemy import select
+    u_map = {}
+    for u in [platform_admin, admin1, coord1, teacher1, student1, admin2]:
+        ra_res = await db_session.execute(
+            select(RoleAssignment).where(RoleAssignment.user_id == u.id, RoleAssignment.status == "active")
+        )
+        u_assignments = list(ra_res.scalars().all())
+        u.role_assignments = u_assignments
+        u._cached_role_assignments = u_assignments
+        u_map[u.id] = u
+
     return {
         "school1": school1,
         "school2": school2,
-        "admin1": admin1,
-        "teacher1": teacher1,
-        "student1": student1,
-        "admin2": admin2,
+        "platform_admin": u_map[platform_admin.id],
+        "admin1": u_map[admin1.id],
+        "coord1": u_map[coord1.id],
+        "teacher1": u_map[teacher1.id],
+        "student1": u_map[student1.id],
+        "admin2": u_map[admin2.id],
+        "band_middle": band_middle,
+        "band_senior": band_senior,
         "class_11": class_11,
         "class_12": class_12,
         "sec_11e": sec_11e,
