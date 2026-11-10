@@ -1,17 +1,26 @@
 import math
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_
+from sqlalchemy import select, func, and_, or_, distinct
 from sqlalchemy.orm import selectinload, joinedload
 from fastapi import HTTPException, status
 
-from backend.app.identity.models import User, UserRole, RoleName
+from backend.app.identity.models import User, UserRole, RoleName, RoleAssignment
 from backend.app.academics.models import (
     Class,
     Section,
     Subject,
     TeacherAssignment,
     StudentEnrollment,
+)
+from backend.app.assessments.models import (
+    Assessment,
+    AssessmentItem,
+    Schedule,
+    Attempt,
+    StudentResponse,
+    AssessmentStatus,
+    AttemptStatus,
 )
 from backend.app.core.policies import authorize
 from backend.app.core.permission_matrix import Action
