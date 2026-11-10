@@ -427,7 +427,7 @@ async def seed():
                 event_type=CalendarEventType.EXAM_PERIOD,
                 starts_at=now_utc - timedelta(days=1),
                 ends_at=now_utc + timedelta(days=7),
-                is_blackout=True,
+                created_by=user_map["admin@mind.local"].id,
                 description="Official mid-term examination period. No overlapping field trips allowed.",
             )
             session.add(cal_exam)
