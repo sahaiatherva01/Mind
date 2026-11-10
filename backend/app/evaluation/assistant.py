@@ -1,11 +1,11 @@
 """
 Subjective Evaluation Assistant Agent — Mind V2 (Agent Track A3)
-LangGraph StateGraph workflow for subjective grading suggestions with rubric matching,
+StateGraph workflow for subjective grading suggestions with rubric matching,
 step-by-step scoring breakdown, and constructive feedback.
 Teacher approval is mandatory: AI output is strictly an advisory suggestion.
 """
-from typing import Dict, Any, List, Optional, TypedDict
-from langgraph.graph import StateGraph, END
+from typing import Dict, Any, List, Optional
+from pydantic import BaseModel, Field
 import re
 
 from backend.app.core.config import settings
@@ -13,31 +13,31 @@ from backend.app.content.models import Question
 from backend.app.assessments.models import StudentResponse, AssessmentItem
 
 
-class EvaluationState(TypedDict, total=False):
+class EvaluationState(BaseModel):
     response_id: str
     question_prompt: str
     student_answer: str
     model_answer: str
-    rubric_steps: List[str]
-    max_marks: float
-    rubric_matches: List[Dict[str, Any]]
-    suggested_score: float
-    teacher_feedback_note: str
-    confidence_score: float
+    rubric_steps: List[str] = Field(default_factory=list)
+    max_marks: float = 1.0
+    rubric_matches: List[Dict[str, Any]] = Field(default_factory=list)
+    suggested_score: float = 0.0
+    teacher_feedback_note: str = ""
+    confidence_score: float = 0.85
+    execution_trace: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class RubricMatcherNode:
     """Matches student text against required rubric concepts, keywords, and derivations."""
 
     @staticmethod
-    def run(state: EvaluationState) -> Dict[str, Any]:
-        student_text = state.get("student_answer", "").strip()
-        model_answer = state.get("model_answer", "").strip()
-        rubric_steps = state.get("rubric_steps", [])
-        max_marks = state.get("max_marks", 1.0)
+    def run(state: EvaluationState) -> EvaluationState:
+        student_text = state.student_answer.strip()
+        model_answer = state.model_answer.strip()
+        rubric_steps = state.rubric_steps
+        max_marks = state.max_marks
 
         if not rubric_steps and model_answer:
-            # Derive steps from model answer sentences
             rubric_steps = [s.strip() for s in model_answer.split(".") if len(s.strip()) > 5]
 
         if not rubric_steps:
@@ -47,7 +47,6 @@ class RubricMatcherNode:
         marks_per_step = max_marks / len(rubric_steps) if rubric_steps else max_marks
 
         for step in rubric_steps:
-            # Extract keywords from step
             keywords = [w.lower() for w in re.findall(r"\b[a-zA-Z]{4,}\b", step)]
             matched_keywords = [kw for kw in keywords if kw in student_text.lower()]
             match_ratio = len(matched_keywords) / len(keywords) if keywords else 0.5
@@ -77,37 +76,35 @@ class RubricMatcherNode:
                     "rationale": "Step omitted or inadequate conceptual coverage in response.",
                 })
 
-        return {"rubric_matches": matches}
+        state.rubric_matches = matches
+        state.execution_trace.append({"node": "RubricMatcherNode", "matched_steps": len(matches)})
+        return state
 
 
 class ScoringCalibratorNode:
     """Calculates final suggested score ensuring 0 <= score <= max_marks."""
 
     @staticmethod
-    def run(state: EvaluationState) -> Dict[str, Any]:
-        rubric_matches = state.get("rubric_matches", [])
-        max_marks = state.get("max_marks", 1.0)
+    def run(state: EvaluationState) -> EvaluationState:
+        rubric_matches = state.rubric_matches
+        max_marks = state.max_marks
 
         raw_score = sum(m["awarded_mark"] for m in rubric_matches)
-        # Cap strictly between 0 and max_marks
         calibrated_score = max(0.0, min(float(max_marks), round(raw_score, 1)))
 
         confidence = 0.88 if len(rubric_matches) > 1 else 0.75
-        return {
-            "suggested_score": calibrated_score,
-            "confidence_score": confidence,
-        }
+        state.suggested_score = calibrated_score
+        state.confidence_score = confidence
+        state.execution_trace.append({"node": "ScoringCalibratorNode", "calibrated_score": calibrated_score})
+        return state
 
 
 class FeedbackSynthesizerNode:
     """Synthesizes structured feedback note highlighting strengths and missing steps."""
 
     @staticmethod
-    def run(state: EvaluationState) -> Dict[str, Any]:
-        rubric_matches = state.get("rubric_matches", [])
-        score = state.get("suggested_score", 0.0)
-        max_marks = state.get("max_marks", 1.0)
-
+    def run(state: EvaluationState) -> EvaluationState:
+        rubric_matches = state.rubric_matches
         met_steps = [m["step_criterion"] for m in rubric_matches if m["status"] == "met"]
         missing_steps = [m["step_criterion"] for m in rubric_matches if m["status"] in ("missing", "partial")]
 
@@ -119,25 +116,20 @@ class FeedbackSynthesizerNode:
         else:
             feedback_parts.append("Comprehensive and well-structured response.")
 
-        feedback_note = " ".join(feedback_parts)
-        return {"teacher_feedback_note": feedback_note}
+        state.teacher_feedback_note = " ".join(feedback_parts)
+        state.execution_trace.append({"node": "FeedbackSynthesizerNode", "feedback_length": len(state.teacher_feedback_note)})
+        return state
 
 
-def create_evaluation_assistant_graph():
-    graph = StateGraph(EvaluationState)
-    graph.add_node("rubric_matcher", RubricMatcherNode.run)
-    graph.add_node("scoring_calibrator", ScoringCalibratorNode.run)
-    graph.add_node("feedback_synthesizer", FeedbackSynthesizerNode.run)
+class EvaluationAssistantStateGraph:
+    """StateGraph pipeline executing RubricMatcher -> ScoringCalibrator -> FeedbackSynthesizer."""
 
-    graph.set_entry_point("rubric_matcher")
-    graph.add_edge("rubric_matcher", "scoring_calibrator")
-    graph.add_edge("scoring_calibrator", "feedback_synthesizer")
-    graph.add_edge("feedback_synthesizer", END)
-
-    return graph.compile()
-
-
-evaluation_assistant_pipeline = create_evaluation_assistant_graph()
+    @staticmethod
+    def execute(initial_state: EvaluationState) -> EvaluationState:
+        state = RubricMatcherNode.run(initial_state)
+        state = ScoringCalibratorNode.run(state)
+        state = FeedbackSynthesizerNode.run(state)
+        return state
 
 
 class EvaluatorAgent:
@@ -156,17 +148,17 @@ class EvaluatorAgent:
         marking_scheme = ans_data.get("marking_scheme") or ans_data.get("rubric_steps") or []
         max_marks = float(item.marks_override or question.marks or 1.0)
 
-        initial_state: EvaluationState = {
-            "response_id": response_id,
-            "question_prompt": question.prompt,
-            "student_answer": student_ans,
-            "model_answer": model_answer,
-            "rubric_steps": marking_scheme,
-            "max_marks": max_marks,
-        }
+        initial_state = EvaluationState(
+            response_id=response_id,
+            question_prompt=question.prompt,
+            student_answer=student_ans,
+            model_answer=model_answer,
+            rubric_steps=marking_scheme,
+            max_marks=max_marks,
+        )
 
-        # Run LangGraph pipeline
-        result = await evaluation_assistant_pipeline.ainvoke(initial_state)
+        # Run StateGraph pipeline
+        result = EvaluationAssistantStateGraph.execute(initial_state)
 
         return {
             "response_id": response_id,
@@ -174,8 +166,8 @@ class EvaluatorAgent:
             "student_answer_text": student_ans,
             "model_answer": model_answer,
             "max_marks": max_marks,
-            "suggested_score": result.get("suggested_score", 0.0),
-            "step_breakdown": result.get("rubric_matches", []),
-            "teacher_feedback_note": result.get("teacher_feedback_note", ""),
-            "confidence_score": result.get("confidence_score", 0.85),
+            "suggested_score": result.suggested_score,
+            "step_breakdown": result.rubric_matches,
+            "teacher_feedback_note": result.teacher_feedback_note,
+            "confidence_score": result.confidence_score,
         }
