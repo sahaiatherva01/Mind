@@ -18,7 +18,7 @@ Seeds:
 - RoleAssignments for all users
 """
 import asyncio
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from sqlalchemy import select
 from backend.app.core.db import async_session_maker, engine, Base
 from backend.app.core.security import hash_password
@@ -31,6 +31,13 @@ from backend.app.academics.models import (
     TeacherAssignment,
     StudentEnrollment,
     CurriculumNode,
+)
+from backend.app.exams.models import CalendarEvent, CalendarEventType
+from backend.app.workflows.models import (
+    CoordinatorIntervention,
+    SmartStudentGroup,
+    StudentAcademicGoal,
+    StudentDoubtQuery,
 )
 
 
@@ -405,6 +412,126 @@ async def seed():
                     source_ref=f"Council for the Indian School Certificate Examinations (CISCE) Syllabus - Class {grade}",
                 )
                 session.add(c_node)
+
+        # 11. Phase 7: Calendar Events
+        now_utc = datetime.now(timezone.utc)
+        cal_res = await session.execute(
+            select(CalendarEvent).where(CalendarEvent.school_id == school.id, CalendarEvent.title == "Mid-Term Exam Window")
+        )
+        if not cal_res.scalar_one_or_none():
+            cal_exam = CalendarEvent(
+                school_id=school.id,
+                academic_year_id=academic_year.id,
+                band_id=band_map["Senior Secondary (11-12)"].id,
+                title="Mid-Term Exam Window",
+                event_type=CalendarEventType.EXAM_PERIOD,
+                starts_at=now_utc - timedelta(days=1),
+                ends_at=now_utc + timedelta(days=7),
+                is_blackout=True,
+                description="Official mid-term examination period. No overlapping field trips allowed.",
+            )
+            session.add(cal_exam)
+
+        # 12. Phase 8: Early-Warning Interventions, Smart Groups, Goals & Doubts
+        aarav = user_map["student.aarav@mind.local"]
+        senior_coord = user_map["coord.senior@mind.local"]
+        cls_11 = class_map["Class 11"]
+        sec_11e = section_map["Class 11-E"]
+
+        # Coordinator Intervention
+        inv_res = await session.execute(
+            select(CoordinatorIntervention).where(CoordinatorIntervention.student_id == aarav.id)
+        )
+        if not inv_res.scalar_one_or_none():
+            intervention = CoordinatorIntervention(
+                school_id=school.id,
+                coordinator_id=senior_coord.id,
+                student_id=aarav.id,
+                risk_score=75,
+                action_type="remedial_session",
+                status="in_progress",
+                notes="Pedagogical intervention initiated for Calculus limit evaluation.",
+            )
+            session.add(intervention)
+
+        # Smart Group
+        sg_res = await session.execute(
+            select(SmartStudentGroup).where(
+                SmartStudentGroup.school_id == school.id,
+                SmartStudentGroup.name == "Calculus Remedial Cohort",
+            )
+        )
+        if not sg_res.scalar_one_or_none():
+            group = SmartStudentGroup(
+                school_id=school.id,
+                teacher_id=maths_teacher.id,
+                class_id=cls_11.id,
+                section_id=sec_11e.id,
+                subject_id=math_sub.id,
+                name="Calculus Remedial Cohort",
+                group_type="remedial",
+                student_ids=[aarav.id],
+                weak_topics=["Limits & Continuity", "Derivatives", "Product Rule"],
+            )
+            session.add(group)
+
+        # Student Academic Goal
+        goal_res = await session.execute(
+            select(StudentAcademicGoal).where(StudentAcademicGoal.student_id == aarav.id)
+        )
+        if not goal_res.scalar_one_or_none():
+            goal = StudentAcademicGoal(
+                school_id=school.id,
+                student_id=aarav.id,
+                goal_title="Master ICSE Calculus Limits & Derivatives",
+                target_pct=85,
+                current_pct=72,
+                status="in_progress",
+            )
+            session.add(goal)
+
+        # Student Doubt
+        doubt_res = await session.execute(
+            select(StudentDoubtQuery).where(StudentDoubtQuery.student_id == aarav.id)
+        )
+        if not doubt_res.scalar_one_or_none():
+            doubt = StudentDoubtQuery(
+                school_id=school.id,
+                student_id=aarav.id,
+                teacher_id=maths_teacher.id,
+                class_id=cls_11.id,
+                section_id=sec_11e.id,
+                subject_name="Mathematics",
+                question_text="How do we compute the derivative of f(x) = x^x using logarithmic differentiation?",
+                status="answered",
+                reply_text="Take natural log on both sides: ln(y) = x ln(x). Then differentiate implicitly: (1/y) dy/dx = ln(x) + 1.",
+            )
+            session.add(doubt)
+
+        # Substitute Teacher Assignment (Physics teacher substituting for CS in 11E for 7 days)
+        cs_sub = subject_map["CS"]
+        subst_res = await session.execute(
+            select(TeacherAssignment).where(
+                TeacherAssignment.school_id == school.id,
+                TeacherAssignment.teacher_id == user_map["physics.teacher@mind.local"].id,
+                TeacherAssignment.class_id == cls_11.id,
+                TeacherAssignment.section_id == sec_11e.id,
+                TeacherAssignment.subject_id == cs_sub.id,
+            )
+        )
+        if not subst_res.scalar_one_or_none():
+            subst = TeacherAssignment(
+                school_id=school.id,
+                teacher_id=user_map["physics.teacher@mind.local"].id,
+                class_id=cls_11.id,
+                section_id=sec_11e.id,
+                subject_id=cs_sub.id,
+                status="active",
+                is_substitute=True,
+                valid_from=now_utc - timedelta(days=1),
+                valid_to=now_utc + timedelta(days=7),
+            )
+            session.add(subst)
 
         await session.commit()
         print("Database seeding completed successfully.")
