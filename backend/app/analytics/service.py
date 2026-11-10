@@ -13,16 +13,12 @@ from backend.app.academics.models import (
     TeacherAssignment,
     StudentEnrollment,
 )
-from backend.app.content.models import Question
-from backend.app.assessments.models import (
-    Assessment,
-    AssessmentItem,
-    Schedule,
-    Attempt,
-    StudentResponse,
-    AssessmentStatus,
-    AttemptStatus,
-)
+from backend.app.core.policies import authorize
+from backend.app.core.permission_matrix import Action
+from backend.app.core.errors import ForbiddenException, NotFoundException
+from backend.app.tenancy.models import Band
+from backend.app.content.models import Material, MaterialEngagement, Question
+from backend.app.analytics.insights import AnalyticsInsightAgent
 from backend.app.analytics.schemas import (
     QuestionAnalysis,
     AssessmentAnalytics,
@@ -30,6 +26,13 @@ from backend.app.analytics.schemas import (
     ClassAnalytics,
     TopicMastery,
     TeacherDashboardSummary,
+    SchoolAnalyticsSummary,
+    BandAnalyticsSummary,
+    IndividualStudentAnalytics,
+    TeacherFourLevelAnalytics,
+    StudentPerformanceMap,
+    AnalyticsInsightRequest,
+    AnalyticsInsightResponse,
 )
 
 
