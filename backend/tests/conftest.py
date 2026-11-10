@@ -149,15 +149,15 @@ async def seeded_test_data(db_session: AsyncSession):
     # Academics for School 1
     class_11 = Class(school_id=school1.id, academic_year_id=year1.id, name="Class 11", band_id=band_senior.id, grade_level=11)
     class_12 = Class(school_id=school1.id, academic_year_id=year1.id, name="Class 12", band_id=band_senior.id, grade_level=12)
-    class_9 = Class(school_id=school1.id, academic_year_id=year1.id, name="Class 9", band_id=band_middle.id, grade_level=9)
-    db_session.add_all([class_11, class_12, class_9])
+    class_8 = Class(school_id=school1.id, academic_year_id=year1.id, name="Class 8", band_id=band_middle.id, grade_level=8)
+    db_session.add_all([class_11, class_12, class_8])
     await db_session.flush()
 
     sec_11e = Section(class_id=class_11.id, name="E")
     sec_12a = Section(class_id=class_12.id, name="A")
     sec_12d = Section(class_id=class_12.id, name="D")
-    sec_9a = Section(class_id=class_9.id, name="A")
-    db_session.add_all([sec_11e, sec_12a, sec_12d, sec_9a])
+    sec_8a = Section(class_id=class_8.id, name="A")
+    db_session.add_all([sec_11e, sec_12a, sec_12d, sec_8a])
     await db_session.flush()
 
     sub_math = Subject(school_id=school1.id, name="Mathematics", code="MATH")
@@ -225,11 +225,11 @@ async def seeded_test_data(db_session: AsyncSession):
         "band_senior": band_senior,
         "class_11": class_11,
         "class_12": class_12,
-        "class_9": class_9,
+        "class_8": class_8,
         "sec_11e": sec_11e,
         "sec_12a": sec_12a,
         "sec_12d": sec_12d,
-        "sec_9a": sec_9a,
+        "sec_8a": sec_8a,
         "sub_math": sub_math,
         "sub_phy": sub_phy,
     }
