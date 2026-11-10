@@ -55,14 +55,6 @@ async def authenticate_user(
     if user.status != "active":
         raise UnauthorizedException("Your account is currently disabled. Please contact your administrator.")
 
-    ra_stmt = select(RoleAssignment).where(
-        RoleAssignment.user_id == user.id,
-        RoleAssignment.status == "active"
-    )
-    ra_res = await db.execute(ra_stmt)
-    user.role_assignments = list(ra_res.scalars().all())
-    user._cached_role_assignments = user.role_assignments
-
     return user
 
 
@@ -231,7 +223,9 @@ async def create_user(
     db.add(role_assignment)
     await db.flush()
 
-    new_user.role_assignments.append(role_assignment)
+    new_user._cached_primary_role = canonical_role
+    new_user.__dict__["role_assignments"] = [role_assignment]
+    new_user._cached_role_assignments = [role_assignment]
 
     await record_audit_event(
         db=db,

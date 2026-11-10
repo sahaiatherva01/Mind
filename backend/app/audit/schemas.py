@@ -10,7 +10,7 @@ class AuditEventResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
-    school_id: str
+    school_id: Optional[str] = None
     actor_id: Optional[str]
     action: str
     entity_type: str

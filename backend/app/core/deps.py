@@ -64,15 +64,6 @@ async def get_current_user(
     if not user or user.status != "active":
         raise UnauthorizedException("User account is inactive or not found")
 
-    # Fetch active role assignments
-    ra_stmt = select(RoleAssignment).where(
-        RoleAssignment.user_id == user.id,
-        RoleAssignment.status == "active"
-    )
-    ra_res = await db.execute(ra_stmt)
-    user.role_assignments = list(ra_res.scalars().all())
-    user._cached_role_assignments = user.role_assignments
-
     return user
 
 

@@ -37,7 +37,6 @@ class UserResponse(BaseModel):
     status: str
     must_change_password: bool = False
     created_at: datetime
-    role_assignments: List[RoleAssignmentResponse] = []
 
 
 class LoginResponse(BaseModel):

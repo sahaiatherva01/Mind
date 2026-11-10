@@ -55,15 +55,15 @@ async def authorize(
         raise ForbiddenException(f"Unknown or unconfigured system action '{action}'")
 
     active_assignments = []
-    if "role_assignments" in actor.__dict__ and actor.__dict__["role_assignments"]:
-        active_assignments = [r for r in actor.__dict__["role_assignments"] if r.status == "active"]
+    if hasattr(actor, "_cached_role_assignments") and actor._cached_role_assignments:
+        active_assignments = [r for r in actor._cached_role_assignments if getattr(r, "status", None) == "active"]
+    elif "role_assignments" in actor.__dict__ and actor.__dict__["role_assignments"] is not None:
+        active_assignments = [r for r in actor.__dict__["role_assignments"] if getattr(r, "status", None) == "active"]
     elif db:
         res = await db.execute(
             select(RoleAssignment).where(RoleAssignment.user_id == actor.id, RoleAssignment.status == "active")
         )
         active_assignments = list(res.scalars().all())
-    elif hasattr(actor, "_cached_role_assignments") and actor._cached_role_assignments:
-        active_assignments = [r for r in actor._cached_role_assignments if r.status == "active"]
 
     if not active_assignments:
         raise ForbiddenException("User has no active role assignments")

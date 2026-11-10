@@ -146,14 +146,6 @@ async def seeded_test_data(db_session: AsyncSession):
     db_session.add_all([ra_platform, ra_admin1, ra_coord1, ra_teacher1, ra_student1, ra_admin2])
     await db_session.flush()
 
-    platform_admin.role_assignments.append(ra_platform)
-    admin1.role_assignments.append(ra_admin1)
-    coord1.role_assignments.append(ra_coord1)
-    teacher1.role_assignments.append(ra_teacher1)
-    student1.role_assignments.append(ra_student1)
-    admin2.role_assignments.append(ra_admin2)
-
-
     # Academics for School 1
     class_11 = Class(school_id=school1.id, academic_year_id=year1.id, name="Class 11")
     class_12 = Class(school_id=school1.id, academic_year_id=year1.id, name="Class 12")
@@ -199,29 +191,28 @@ async def seeded_test_data(db_session: AsyncSession):
     )
     db_session.add(enroll1)
 
-    await db_session.commit()
+    await db_session.flush()
 
-    # Explicitly attach role_assignments to returned user objects
-    from sqlalchemy import select
-    u_map = {}
-    for u in [platform_admin, admin1, coord1, teacher1, student1, admin2]:
-        ra_res = await db_session.execute(
-            select(RoleAssignment).where(RoleAssignment.user_id == u.id, RoleAssignment.status == "active")
-        )
-        u_assignments = list(ra_res.scalars().all())
-        u.role_assignments = u_assignments
-        u._cached_role_assignments = u_assignments
-        u_map[u.id] = u
+    for u, ra in [
+        (platform_admin, ra_platform),
+        (admin1, ra_admin1),
+        (coord1, ra_coord1),
+        (teacher1, ra_teacher1),
+        (student1, ra_student1),
+        (admin2, ra_admin2),
+    ]:
+        u._cached_role_assignments = [ra]
+        u.__dict__["role_assignments"] = [ra]
 
     return {
         "school1": school1,
         "school2": school2,
-        "platform_admin": u_map[platform_admin.id],
-        "admin1": u_map[admin1.id],
-        "coord1": u_map[coord1.id],
-        "teacher1": u_map[teacher1.id],
-        "student1": u_map[student1.id],
-        "admin2": u_map[admin2.id],
+        "platform_admin": platform_admin,
+        "admin1": admin1,
+        "coord1": coord1,
+        "teacher1": teacher1,
+        "student1": student1,
+        "admin2": admin2,
         "band_middle": band_middle,
         "band_senior": band_senior,
         "class_11": class_11,

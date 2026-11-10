@@ -54,7 +54,7 @@ class User(UUIDBase):
     # Relationships
     school: Mapped[Optional["School"]] = relationship("School", back_populates="users")  # type: ignore # noqa: F821
     role_assignments: Mapped[List["RoleAssignment"]] = relationship(
-        "RoleAssignment", back_populates="user", cascade="all, delete-orphan"
+        "RoleAssignment", back_populates="user", cascade="all, delete-orphan", lazy="selectin"
     )
     sessions: Mapped[List["Session"]] = relationship("Session", back_populates="user", cascade="all, delete-orphan")
     reset_tokens: Mapped[List["PasswordResetToken"]] = relationship(
@@ -64,9 +64,10 @@ class User(UUIDBase):
     @property
     def primary_role(self) -> str:
         """Determines effective highest role for navigation and display."""
-        assignments = self.__dict__.get("role_assignments", [])
+        # Never trigger an implicit database query from inside a property in async SQLAlchemy!
+        assignments = self.__dict__.get("role_assignments")
         if not assignments:
-            return RoleName.STUDENT
+            return getattr(self, "_cached_primary_role", RoleName.STUDENT)
         active_assignments = [r for r in assignments if getattr(r, "status", None) == "active"]
         roles = {r.role for r in active_assignments}
         if RoleName.PLATFORM_ADMIN in roles:
@@ -79,7 +80,7 @@ class User(UUIDBase):
             return RoleName.TEACHER
         if RoleName.STUDENT in roles:
             return RoleName.STUDENT
-        return RoleName.STUDENT
+        return getattr(self, "_cached_primary_role", RoleName.STUDENT)
 
     @property
     def role(self) -> str:
