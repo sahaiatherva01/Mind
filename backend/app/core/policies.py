@@ -114,8 +114,14 @@ async def authorize(
                 # If resource specifies class_id, check if class belongs to this band
                 if res_class_id and db and assignment.band_id:
                     res_class = await db.get(Class, res_class_id)
-                    if res_class and res_class.band_id == assignment.band_id:
-                        return True
+                    if res_class:
+                        if res_class.band_id == assignment.band_id:
+                            return True
+                        if res_class.grade_level:
+                            from backend.app.tenancy.models import Band
+                            band_obj = await db.get(Band, assignment.band_id)
+                            if band_obj and band_obj.min_grade <= res_class.grade_level <= band_obj.max_grade:
+                                return True
                 # If neither band_id nor class_id specified (e.g. band dashboard view)
                 if not res_band_id and not res_class_id:
                     return True
