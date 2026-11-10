@@ -150,3 +150,4 @@ async def open_learning_material(
         "opened_at": engagement.opened_at,
         "duration_seconds": engagement.duration_seconds,
     }
+

@@ -46,8 +46,10 @@ async def execute_generation_job_with_db(db: AsyncSession, job_id: str) -> Dict[
         spec_data = job.input_json or {}
         spec = GenerationRequestSpec(**spec_data)
 
-        questions, warnings = await asyncio.wait_for(
-            gateway.generate_draft(spec, prompt_version=job.prompt_version or "v1.0"),
+        from backend.app.generation.graph import run_generation_pipeline
+
+        questions, warnings, trace = await asyncio.wait_for(
+            run_generation_pipeline(spec, prompt_version=job.prompt_version or "v1.0"),
             timeout=90.0,
         )
 
@@ -57,6 +59,7 @@ async def execute_generation_job_with_db(db: AsyncSession, job_id: str) -> Dict[
             return {"status": "cancelled", "job_id": job_id}
 
         job.warnings = warnings
+        job.output_json = {"execution_trace": trace, "item_count": len(questions)}
 
         title_prefix = spec.output_type.replace("_", " ").title()
         assessment = Assessment(

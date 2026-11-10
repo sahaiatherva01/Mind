@@ -108,6 +108,30 @@ async def publish_or_schedule_assessment(
     assessment.status = new_status
     await db.flush()
 
+    # Trigger notifications for enrolled students in section
+    if new_status in ("published", "scheduled"):
+        from backend.app.academics.models import StudentEnrollment
+        from backend.app.notifications.service import send_bulk_notifications
+        enr_res = await db.execute(
+            select(StudentEnrollment.student_id).where(
+                StudentEnrollment.school_id == school_id,
+                StudentEnrollment.section_id == assessment.section_id,
+                StudentEnrollment.status == "active",
+            )
+        )
+        enrolled_student_ids = list(enr_res.scalars().all())
+        if enrolled_student_ids:
+            await send_bulk_notifications(
+                db=db,
+                school_id=school_id,
+                user_ids=enrolled_student_ids,
+                title=f"New Assessment Assigned: {assessment.title}",
+                message=f"A new {assessment.type.replace('_', ' ')} has been published for your section. Check upcoming tests to attempt.",
+                type="assignment_published",
+                link_url="/student/assessments",
+                metadata_json={"assessment_id": assessment.id, "type": assessment.type},
+            )
+
     await record_audit_event(
         db=db,
         school_id=school_id,
@@ -440,6 +464,25 @@ async def submit_student_attempt(
 
     await db.flush()
 
+    # Notify teacher/creator of submission
+    from backend.app.notifications.service import create_notification
+    from backend.app.identity.models import User
+    student_obj = await db.get(User, student_id)
+    student_name = student_obj.full_name if student_obj else "A student"
+    try:
+        await create_notification(
+            db=db,
+            school_id=school_id,
+            user_id=assessment.creator_id,
+            title=f"Submission: {assessment.title}",
+            message=f"{student_name} submitted their attempt for '{assessment.title}'.",
+            type="submission_received",
+            link_url="/teacher/evaluations",
+            metadata_json={"attempt_id": attempt.id, "student_id": student_id, "assessment_id": assessment.id},
+        )
+    except Exception as err:
+        logger.warning(f"Could not dispatch submission notification: {err}")
+
     await record_audit_event(
         db=db,
         school_id=school_id,
@@ -573,6 +616,24 @@ async def release_assessment_results(
     asmt.status = "results_released"
 
     await db.flush()
+
+    # Notify students who attempted the assessment that results are released
+    from backend.app.notifications.service import send_bulk_notifications
+    student_ids = list({att.student_id for att in attempts})
+    if student_ids:
+        try:
+            await send_bulk_notifications(
+                db=db,
+                school_id=school_id,
+                user_ids=student_ids,
+                title=f"Results Released: {asmt.title}",
+                message=f"Results and teacher feedback for '{asmt.title}' are now available. Review your marks and answers.",
+                type="results_released",
+                link_url="/student/results",
+                metadata_json={"assessment_id": assessment_id},
+            )
+        except Exception as err:
+            logger.warning(f"Could not dispatch results released notifications: {err}")
 
     await record_audit_event(
         db=db,

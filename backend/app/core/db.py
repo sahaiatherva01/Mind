@@ -81,6 +81,7 @@ def _load_all_models():
     import backend.app.generation.models  # noqa: F401
     import backend.app.assessments.models  # noqa: F401
     import backend.app.audit.models  # noqa: F401
+    import backend.app.notifications.models  # noqa: F401
 
 _load_all_models()
 

@@ -35,6 +35,7 @@ from backend.app.assessments.student_router import (
 from backend.app.evaluation.router import eval_router
 from backend.app.analytics.router import router as analytics_router
 from backend.app.content.router import content_router, student_learning_router
+from backend.app.notifications.router import router as notifications_router
 
 logger = get_logger("mind.main")
 
@@ -99,6 +100,7 @@ app.include_router(eval_router, prefix=api_v1_prefix)
 app.include_router(analytics_router, prefix=api_v1_prefix)
 app.include_router(content_router, prefix=api_v1_prefix)
 app.include_router(student_learning_router, prefix=api_v1_prefix)
+app.include_router(notifications_router, prefix=api_v1_prefix)
 
 
 @app.get("/health", tags=["Health"])
