@@ -136,6 +136,10 @@ class Attempt(UUIDBase, TenantMixin):
     is_released: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     released_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Exam Resilience & Anti-Cheat Telemetry
+    tab_switches_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    integrity_events_json: Mapped[Optional[list]] = mapped_column(JSON, default=list, nullable=True)
+
     assessment: Mapped["Assessment"] = relationship("Assessment", back_populates="attempts")
     student: Mapped["User"] = relationship("User")  # type: ignore # noqa: F821
     responses: Mapped[List["StudentResponse"]] = relationship(
@@ -160,6 +164,8 @@ class StudentResponse(UUIDBase):
     auto_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     manual_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     teacher_feedback: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
+    ai_suggested_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    ai_feedback_suggestion: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
     saved_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )

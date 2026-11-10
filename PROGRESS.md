@@ -16,15 +16,15 @@ Tagline: *Intelligence for Better Learning*
 | **Phase 3** | Teacher: Students, Rosters & Credentials | **COMPLETE** | Class Teacher student onboarding, unique roll numbers, roster lock, credential slips, first-login password change, 40/40 tests green. |
 | **Phase 4** | Materials & My Learning | **COMPLETE** | `content` module, PDF chunking, Question Extractor agent with side-by-side review, student My Learning view & open tracking, 47/47 tests green. |
 | **Phase 5** | Assignments & Notifications | **COMPLETE** | `notifications` module, assignment lifecycle, LangGraph StateGraph AI Studio generation, Difficulty Tagger, 53/53 tests green. |
-| **Phase 6** | Analytics (4 Levels + Cross Analytics) | **NEXT** | School, Coordinator, Teacher (4 levels), Student views; Analytics Insight agent. |
-| **Phase 7** | Exams, Calendar, Report Cards, Approvals | PENDING | Clash detection, Set A–D builder, blueprint validator, subjective evaluation assistant, branded report card PDF. |
+| **Phase 6** | Analytics (4 Levels + Cross Analytics) | **COMPLETE** | School Admin, Band Coordinator, 4-Level Teacher (student, section, subject, material engagement correlation), Student performance map, Analytics Insight Agent (zero text-to-SQL), 58/58 tests green. |
+| **Phase 7** | Exams, Calendar, Report Cards, Approvals | **NEXT** | Clash detection, Set A–D builder, blueprint validator, subjective evaluation assistant, branded report card PDF. |
 | **Phase 8** | Advanced Non-Parked Workflows | PENDING | Early warning, smart groups, remedial generation, substitution manager. |
 
 ---
 
-## 2. Test & Build Verification (Phase 5 Status)
-- **Backend Tests:** 53/53 passing (`.venv/bin/pytest backend/tests/ -v` in 25.14s).
-- **Frontend Build:** Clean compilation with 0 TypeScript/Vite errors (`npm run build --prefix frontend` in 1.71s).
+## 2. Test & Build Verification (Phase 6 Status)
+- **Backend Tests:** 58/58 passing (`.venv/bin/pytest backend/tests/ -v` in 32s).
+- **Frontend Build:** Clean compilation with 0 TypeScript/Vite errors (`npm run build --prefix frontend` in 1.49s).
 - **Database Migrations:** Baseline `f0506b03ca22` + Phase 1 `766e3fbe416b` + Phase 4 `50d2b9cc5c0d` + Phase 5 `c61e1970b7e6` stamped at head.
 - **Git State:** `main` branch, working tree modified for manual review. All changes uncommitted.
 

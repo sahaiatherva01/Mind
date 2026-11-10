@@ -73,6 +73,13 @@ class Action:
     # Audit
     AUDIT_LOG_VIEW = "audit.log.view"
 
+    # Phase 7: Exams, Calendar & Reports
+    CALENDAR_MANAGE = "calendar.manage"
+    CALENDAR_VIEW = "calendar.view"
+    EXAM_PLANNER_MANAGE = "exam.planner.manage"
+    REPORT_CARD_VIEW = "report_card.view"
+    REPORT_CARD_GENERATE = "report_card.generate"
+
 
 # Machine-readable permissions contract
 # Maps Action -> Dict of Role -> Required Scope Type
@@ -142,6 +149,13 @@ PERMISSION_MATRIX: Dict[str, Dict[str, str]] = {
 
     # Audit Actions
     Action.AUDIT_LOG_VIEW: {RoleName.PLATFORM_ADMIN: "global", RoleName.SCHOOL_ADMIN: "school"},
+
+    # Phase 7: Exams, Calendar & Reports
+    Action.CALENDAR_MANAGE: {RoleName.SCHOOL_ADMIN: "school", RoleName.ACADEMIC_COORDINATOR: "band", RoleName.PLATFORM_ADMIN: "global"},
+    Action.CALENDAR_VIEW: {RoleName.SCHOOL_ADMIN: "school", RoleName.ACADEMIC_COORDINATOR: "band", RoleName.TEACHER: "assigned_class", RoleName.STUDENT: "enrolled_section", RoleName.PLATFORM_ADMIN: "global"},
+    Action.EXAM_PLANNER_MANAGE: {RoleName.ACADEMIC_COORDINATOR: "band", RoleName.SCHOOL_ADMIN: "school", RoleName.PLATFORM_ADMIN: "global"},
+    Action.REPORT_CARD_VIEW: {RoleName.STUDENT: "self", RoleName.TEACHER: "assigned_class", RoleName.ACADEMIC_COORDINATOR: "band", RoleName.SCHOOL_ADMIN: "school", RoleName.PLATFORM_ADMIN: "global"},
+    Action.REPORT_CARD_GENERATE: {RoleName.SCHOOL_ADMIN: "school", RoleName.ACADEMIC_COORDINATOR: "band", RoleName.TEACHER: "class_teacher", RoleName.PLATFORM_ADMIN: "global"},
 }
 
 

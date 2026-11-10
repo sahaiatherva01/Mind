@@ -218,3 +218,4 @@ class AnalyticsInsightAgent:
             pedagogical_recommendations=recommendations,
             evidence_tools_used=evidence_tools,
         )
+

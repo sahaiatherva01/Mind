@@ -2,19 +2,52 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { FileCheck, CheckCircle2, Clock, BookOpen, ArrowRight } from 'lucide-react';
+import {
+  FileCheck,
+  CheckCircle2,
+  Clock,
+  BookOpen,
+  ArrowRight,
+  TrendingUp,
+  ShieldCheck,
+  Award,
+} from 'lucide-react';
+
+interface TopicMastery {
+  topic: string;
+  subject: string;
+  total_items: number;
+  total_attempts: number;
+  average_mastery_pct: number;
+  status: 'mastered' | 'proficient' | 'needs_reinforcement';
+}
+
+interface StudentPerformanceMap {
+  student_id: string;
+  student_name: string;
+  class_name: string;
+  section_name: string;
+  total_assessments_taken: number;
+  average_score_pct: number;
+  topic_mastery: TopicMastery[];
+  materials_completed_count: number;
+}
 
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
   const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [performanceMap, setPerformanceMap] = useState<StudentPerformanceMap | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
         const eRes = await apiRequest<any[]>('/student-enrollments');
         setEnrollments(eRes);
+
+        const pRes = await apiRequest<StudentPerformanceMap>('/student/performance-map');
+        setPerformanceMap(pRes);
       } catch (err) {
-        console.error('Failed to load student enrollments', err);
+        console.error('Failed to load student dashboard metadata', err);
       }
     }
     load();
@@ -32,7 +65,7 @@ export const StudentDashboard: React.FC = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
           <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
             <Clock className="w-6 h-6" />
@@ -48,19 +81,94 @@ export const StudentDashboard: React.FC = () => {
             <FileCheck className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-slate-900">0</div>
-            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Completed Attempts</div>
+            <div className="text-2xl font-bold text-slate-900">
+              {performanceMap?.total_assessments_taken || 0}
+            </div>
+            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Assessments Taken</div>
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
           <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
-            <CheckCircle2 className="w-6 h-6" />
+            <TrendingUp className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-slate-900">0</div>
-            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Released Results</div>
+            <div className="text-2xl font-bold text-slate-900">
+              {performanceMap?.average_score_pct || 0}%
+            </div>
+            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Cumulative Average</div>
           </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+          <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-slate-900">
+              {performanceMap?.materials_completed_count || 0}
+            </div>
+            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Materials Read</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Private Performance Map Section */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Award className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-base font-bold text-slate-900">Personal Topic Mastery & Strength Map</h3>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Your real-time concept mastery across assessed chapters and distributed curriculum notes.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 self-start sm:self-auto">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            Strictly Private to You
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+          {performanceMap?.topic_mastery && performanceMap.topic_mastery.length > 0 ? (
+            performanceMap.topic_mastery.map((tm, idx) => (
+              <div key={idx} className="p-4 bg-slate-50 rounded-lg border border-slate-100 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-800 truncate">{tm.topic}</span>
+                  <span
+                    className={`font-semibold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider ${
+                      tm.status === 'mastered'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : tm.status === 'proficient'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-rose-100 text-rose-800'
+                    }`}
+                  >
+                    {tm.status}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-500 font-medium">
+                  <span>Accuracy</span>
+                  <span className="font-bold text-slate-900">{tm.average_mastery_pct}%</span>
+                </div>
+                <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className={`h-full ${
+                      tm.average_mastery_pct >= 80 ? 'bg-emerald-500' : tm.average_mastery_pct >= 60 ? 'bg-blue-500' : 'bg-rose-500'
+                    }`}
+                    style={{ width: `${tm.average_mastery_pct}%` }}
+                  />
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full py-8 text-center text-xs text-slate-400">
+              <CheckCircle2 className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              Your personalized topic mastery map will populate as you complete evaluations and review materials.
+            </div>
+          )}
         </div>
       </div>
 

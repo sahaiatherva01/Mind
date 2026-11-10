@@ -60,11 +60,11 @@ Priorities: P0 = Phase exit blocker, P1 = Phase feature, P2 = Advanced.
 ---
 
 ## Phase 6 — Analytics (4 Levels + Cross-Analytics)
-- [ ] P0 School Admin analytics (school-wide trends, teacher activity indicators).
-- [ ] P0 Coordinator analytics (band summaries, cross-section difficulty comparison).
-- [ ] P0 Teacher 4-level analytics (individual, class, subject, cross-analytics) + material engagement correlation.
-- [ ] P0 Student personal performance map (strictly private).
-- [ ] P1 Agent Track A5: Analytics Insight agent using scoped tool functions with zero text-to-SQL.
+- [x] P0 School Admin analytics (school-wide trends, teacher activity indicators).
+- [x] P0 Coordinator analytics (band summaries, cross-section difficulty comparison).
+- [x] P0 Teacher 4-level analytics (individual, class, subject, cross-analytics) + material engagement correlation.
+- [x] P0 Student personal performance map (strictly private).
+- [x] P1 Agent Track A5: Analytics Insight agent using scoped tool functions with zero text-to-SQL.
 
 ---
 
