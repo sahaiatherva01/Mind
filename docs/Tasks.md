@@ -13,13 +13,13 @@ Priorities: P0 = Phase exit blocker, P1 = Phase feature, P2 = Advanced.
 ---
 
 ## Phase 1 — Scoped RBAC Refactor & 5 Tiers
-- [ ] P0 Implement `RoleAssignment`, `Band`, and `AcademicYear` models.
-- [ ] P0 Build central `authorize(actor, action, resource)` policy engine in `backend/app/core/policies.py`.
-- [ ] P0 Construct machine-readable `backend/app/core/permission_matrix.py` and generate comprehensive tests.
-- [ ] P0 Alembic migration transitioning legacy `users.role` to `RoleAssignment`.
-- [ ] P0 Platform Admin API & UI: School lifecycle, School Admin & Coordinator provisioning, feature flags.
-- [ ] P0 School Admin API & UI: School profile/branding, academic structure, class bands, settings.
-- [ ] P0 Eradicate all legacy `users.role` dependencies.
+- [x] P0 Implement `RoleAssignment`, `Band`, and `AcademicYear` models.
+- [x] P0 Build central `authorize(actor, action, resource)` policy engine in `backend/app/core/policies.py`.
+- [x] P0 Construct machine-readable `backend/app/core/permission_matrix.py` and generate comprehensive tests.
+- [x] P0 Alembic migration transitioning legacy `users.role` to `RoleAssignment`.
+- [x] P0 Platform Admin API & UI: School lifecycle, School Admin & Coordinator provisioning, feature flags.
+- [x] P0 School Admin API & UI: School profile/branding, academic structure, class bands, settings.
+- [x] P0 Eradicate all legacy `users.role` dependencies.
 
 ---
 
