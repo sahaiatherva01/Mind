@@ -216,3 +216,4 @@ async def test_school_admin_band_management(client: AsyncClient, seeded_test_dat
     )
     assert create_band_res.status_code == 201
     assert create_band_res.json()["name"] == "Primary (1-5)"
+

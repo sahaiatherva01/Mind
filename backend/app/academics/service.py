@@ -527,7 +527,6 @@ async def process_bulk_import_file(
                 )
                 db.add(role_asgn)
                 await db.flush()
-                user.role_assignments.append(role_asgn)
 
 
             # Handle class and section if provided

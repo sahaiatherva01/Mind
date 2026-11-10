@@ -1,16 +1,23 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
 
-export type UserRole = 'admin' | 'teacher' | 'student';
+export type UserRole =
+  | 'platform_admin'
+  | 'school_admin'
+  | 'academic_coordinator'
+  | 'teacher'
+  | 'student'
+  | 'admin';
 
 export interface User {
   id: string;
-  school_id: string;
+  school_id?: string | null;
   email: string;
   full_name: string;
   role: UserRole;
   designation?: string;
   status: string;
+  must_change_password?: boolean;
 }
 
 export interface School {
@@ -18,6 +25,8 @@ export interface School {
   name: string;
   slug: string;
   timezone: string;
+  code?: string;
+  board?: string;
 }
 
 interface AuthContextType {
@@ -38,9 +47,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshMe = async () => {
     try {
-      const data = await apiRequest<{ user: User; school: School }>('/auth/me');
+      const data = await apiRequest<{ user: User; school?: School | null }>('/auth/me');
       setUser(data.user);
-      setSchool(data.school);
+      setSchool(data.school || null);
     } catch (err) {
       setUser(null);
       setSchool(null);

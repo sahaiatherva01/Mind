@@ -41,21 +41,67 @@ export const DashboardLayout: React.FC = () => {
               <p className="text-xs text-slate-400">Better Learning</p>
             </div>
           </div>
-          {school && (
+          {school ? (
             <div className="mt-3.5 px-2.5 py-1.5 rounded bg-slate-800/70 border border-slate-700/60 flex items-center text-xs text-slate-300">
               <SchoolIcon className="w-3.5 h-3.5 mr-1.5 text-indigo-400 flex-shrink-0" />
               <span className="truncate">{school.name}</span>
+            </div>
+          ) : (
+            <div className="mt-3.5 px-2.5 py-1.5 rounded bg-purple-950/50 border border-purple-700/60 flex items-center text-xs text-purple-200">
+              <span className="truncate font-medium">Platform Administration (Global)</span>
             </div>
           )}
         </div>
 
         {/* Navigation list */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {/* Admin Navigation */}
-          {user.role === 'admin' && (
+          {/* Platform Admin Navigation */}
+          {user.role === 'platform_admin' && (
             <>
               <div className="px-3 pb-2 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                Administration
+                Platform Console
+              </div>
+              <NavLink
+                to="/admin/dashboard"
+                className={({ isActive }) =>
+                  `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`
+                }
+              >
+                <LayoutDashboard className="w-4 h-4 mr-3" />
+                Overview
+              </NavLink>
+              <NavLink
+                to="/admin/academic-setup"
+                className={({ isActive }) =>
+                  `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`
+                }
+              >
+                <GraduationCap className="w-4 h-4 mr-3" />
+                Schools & Structure
+              </NavLink>
+              <NavLink
+                to="/admin/audit"
+                className={({ isActive }) =>
+                  `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`
+                }
+              >
+                <ShieldAlert className="w-4 h-4 mr-3" />
+                Platform Audit
+              </NavLink>
+            </>
+          )}
+
+          {/* School Admin & Academic Coordinator Navigation */}
+          {(user.role === 'admin' || user.role === 'school_admin' || user.role === 'academic_coordinator') && (
+            <>
+              <div className="px-3 pb-2 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                {user.role === 'academic_coordinator' ? 'Coordinator Panel' : 'Administration'}
               </div>
               <NavLink
                 to="/admin/dashboard"

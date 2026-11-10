@@ -113,7 +113,15 @@ export const LoginPage: React.FC = () => {
               <Sparkles className="w-3.5 h-3.5 mr-1 text-indigo-500" />
               Quick Demo Logins
             </p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setDemoAccount('platform.admin@mind.local', 'PlatformPass123!')}
+                className="px-2.5 py-1.5 rounded border border-purple-200 hover:border-purple-500 hover:bg-purple-50/50 text-slate-700 text-left transition-colors truncate"
+              >
+                <span className="font-semibold block text-purple-900">Platform Admin</span>
+                platform.admin@mind.local
+              </button>
               <button
                 type="button"
                 onClick={() => setDemoAccount('admin@mind.local', 'AdminPass123!')}
@@ -124,11 +132,19 @@ export const LoginPage: React.FC = () => {
               </button>
               <button
                 type="button"
+                onClick={() => setDemoAccount('coord.senior@mind.local', 'CoordPass123!')}
+                className="px-2.5 py-1.5 rounded border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 text-slate-700 text-left transition-colors truncate"
+              >
+                <span className="font-semibold block text-slate-900">Coordinator (11-12)</span>
+                coord.senior@mind.local
+              </button>
+              <button
+                type="button"
                 onClick={() => setDemoAccount('maths.teacher@mind.local', 'TeacherPass123!')}
                 className="px-2.5 py-1.5 rounded border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 text-slate-700 text-left transition-colors truncate"
               >
                 <span className="font-semibold block text-slate-900">Maths Teacher</span>
-                11E, 12A, 12D
+                maths.teacher@mind.local
               </button>
               <button
                 type="button"
@@ -136,7 +152,7 @@ export const LoginPage: React.FC = () => {
                 className="px-2.5 py-1.5 rounded border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 text-slate-700 text-left transition-colors truncate"
               >
                 <span className="font-semibold block text-slate-900">Physics Teacher</span>
-                11E, 12A
+                physics.teacher@mind.local
               </button>
               <button
                 type="button"

@@ -174,3 +174,4 @@ async def list_platform_audit_logs(
     stmt = select(AuditEvent).order_by(AuditEvent.created_at.desc()).limit(limit)
     res = await db.execute(stmt)
     return [AuditEventResponse.model_validate(e) for e in res.scalars().all()]
+

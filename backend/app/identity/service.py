@@ -45,7 +45,11 @@ async def authenticate_user(
     email: str,
     password: str
 ) -> User:
-    stmt = select(User).where(User.email == email.lower().strip())
+    stmt = (
+        select(User)
+        .options(selectinload(User.role_assignments))
+        .where(User.email == email.lower().strip())
+    )
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
 
@@ -224,7 +228,6 @@ async def create_user(
     await db.flush()
 
     new_user._cached_primary_role = canonical_role
-    new_user.__dict__["role_assignments"] = [role_assignment]
     new_user._cached_role_assignments = [role_assignment]
 
     await record_audit_event(

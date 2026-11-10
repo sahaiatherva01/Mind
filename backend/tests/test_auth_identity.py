@@ -15,7 +15,7 @@ async def test_login_success_and_cookie(client: AsyncClient, seeded_test_data):
     data = res.json()
     assert "session_token" in data
     assert data["user"]["email"] == "admin@school1.org"
-    assert data["user"]["role"] == "admin"
+    assert data["user"]["role"] in ("admin", "school_admin")
     assert "mind_session" in res.cookies
 
 

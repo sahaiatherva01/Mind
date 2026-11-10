@@ -64,10 +64,11 @@ class User(UUIDBase):
     @property
     def primary_role(self) -> str:
         """Determines effective highest role for navigation and display."""
-        # Never trigger an implicit database query from inside a property in async SQLAlchemy!
+        if hasattr(self, "_cached_primary_role") and self._cached_primary_role:
+            return self._cached_primary_role
         assignments = self.__dict__.get("role_assignments")
         if not assignments:
-            return getattr(self, "_cached_primary_role", RoleName.STUDENT)
+            return RoleName.STUDENT
         active_assignments = [r for r in assignments if getattr(r, "status", None) == "active"]
         roles = {r.role for r in active_assignments}
         if RoleName.PLATFORM_ADMIN in roles:
@@ -80,7 +81,7 @@ class User(UUIDBase):
             return RoleName.TEACHER
         if RoleName.STUDENT in roles:
             return RoleName.STUDENT
-        return getattr(self, "_cached_primary_role", RoleName.STUDENT)
+        return RoleName.STUDENT
 
     @property
     def role(self) -> str:

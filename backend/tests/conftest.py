@@ -201,8 +201,8 @@ async def seeded_test_data(db_session: AsyncSession):
         (student1, ra_student1),
         (admin2, ra_admin2),
     ]:
+        u._cached_primary_role = ra.role
         u._cached_role_assignments = [ra]
-        u.__dict__["role_assignments"] = [ra]
 
     return {
         "school1": school1,

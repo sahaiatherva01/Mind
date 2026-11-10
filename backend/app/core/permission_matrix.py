@@ -155,3 +155,4 @@ def get_required_scope(role: str, action: str) -> Optional[str]:
     """Returns the scope type required for the role to perform this action."""
     action_rules = PERMISSION_MATRIX.get(action, {})
     return action_rules.get(role)
+
