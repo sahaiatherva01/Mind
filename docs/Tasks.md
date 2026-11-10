@@ -1,59 +1,85 @@
-# Implementation Backlog — Mind
+# Implementation Backlog — Mind V2
 
-Priorities: P0 = release blocker, P1 = important for V1, P2 = later improvement.
+Priorities: P0 = Phase exit blocker, P1 = Phase feature, P2 = Advanced.
 
-## Foundation
-- [x] P0 Define repo structure, branching, linting, formatting and code review rules.
-- [x] P0 Configure local/dev/staging/prod environments and secret management.
-- [x] P0 Set up CI for lint, type checks, tests and build.
-- [x] P0 Implement school tenant model and migrations.
-- [x] P0 Implement authentication, password reset and session lifecycle.
-- [x] P0 Implement RBAC and assignment-scoped authorisation tests.
-- [x] P1 Implement audit event service.
+---
 
-## Academic setup
-- [x] P0 CRUD academic years, classes and sections.
-- [x] P0 CRUD subjects and curriculum mapping.
-- [x] P0 Teacher assignment management.
-- [x] P0 Student enrolment management.
-- [x] P1 Bulk import with validation and error report.
+## Phase 0 — Baseline & Discovery
+- [x] P0 Verify backend test suite (21/21 passed) and frontend build (`tsc -b && vite build` clean).
+- [x] P0 Save `docs/MIND_V2_SPEC.md` and define parked backlog in `docs/BACKLOG.md`.
+- [x] P0 Update documentation package to 5-tier architecture (`README.md`, `PRD.md`, `Architecture.md`, `Rules.md`, `Phases.md`, `Tasks.md`, `API.md`).
+- [ ] P0 Produce Baseline Report and wait for `GO PHASE 1`.
 
-## Content and AI
-- [x] P0 Define question and assessment JSON schemas.
-- [x] P0 Build provider-agnostic AI gateway.
-- [x] P0 Add async generation jobs and status polling.
-- [x] P0 Implement question validation and mark-total checks.
-- [x] P0 Build worksheet generator.
-- [x] P0 Build quiz generator (MCQ + short answer).
-- [x] P1 Build question-paper generator.
-- [x] P0 Build teacher editor, preview and answer-key panel.
-- [x] P0 Add draft/approved state and version history.
-- [x] P1 Add source upload and approved-source retrieval.
+---
 
-## Assessment delivery
-- [x] P0 Implement publish and immutable assessment version.
-- [x] P0 Implement scheduling and timezone handling.
-- [x] P0 Build student assignment list and assessment player.
-- [x] P0 Implement autosave and idempotent submission.
-- [x] P0 Implement objective scoring.
-- [x] P1 Build subjective marking workflow and rubric support.
-- [x] P0 Implement result release policy.
+## Phase 1 — Scoped RBAC Refactor & 5 Tiers
+- [ ] P0 Implement `RoleAssignment`, `Band`, and `AcademicYear` models.
+- [ ] P0 Build central `authorize(actor, action, resource)` policy engine in `backend/app/core/policies.py`.
+- [ ] P0 Construct machine-readable `backend/app/core/permission_matrix.py` and generate comprehensive tests.
+- [ ] P0 Alembic migration transitioning legacy `users.role` to `RoleAssignment`.
+- [ ] P0 Platform Admin API & UI: School lifecycle, School Admin & Coordinator provisioning, feature flags.
+- [ ] P0 School Admin API & UI: School profile/branding, academic structure, class bands, settings.
+- [ ] P0 Eradicate all legacy `users.role` dependencies.
 
-## Analytics and operations
-- [x] P1 Teacher dashboard and pending evaluation count.
-- [x] P1 Question-wise and topic-level analytics.
-- [x] P1 PDF/CSV exports.
-- [x] P0 Structured logging and error monitoring.
-- [x] P0 Backup/restore test.
-- [x] P0 Security and privacy review.
-- [x] P1 Accessibility review and mobile QA.
-- [x] P1 Pilot onboarding guide and feedback collection.
+---
 
-## Release checklist
-- [x] All P0 acceptance criteria pass.
-- [x] Cross-tenant and cross-role tests pass.
-- [x] No answer-key leakage in student API responses.
-- [x] Schedule and submission edge cases tested.
-- [x] Teacher approval required for generated content.
-- [x] Privacy notice, retention and consent process approved.
-- [x] Support contact and incident response owner assigned.
+## Phase 2 — Academic Coordinator & Assignment Matrix
+- [ ] P0 Academic Coordinator dashboard scoped strictly to assigned band.
+- [ ] P0 Teacher management: CRUD, status toggling, password resets within band.
+- [ ] P0 Bulk Excel teacher onboarding with pre-commit validation and row-level error reporting.
+- [ ] P0 Assignment matrix (Teacher × Class × Section × Subject).
+- [ ] P0 Enforce exactly one Class Teacher per section constraint.
+- [ ] P0 Band-scoped curriculum chapter and topic viewer.
+
+---
+
+## Phase 3 — Teacher: Students, Rosters & Credentials
+- [ ] P0 Class Teacher single and CSV student onboarding with roll number assignment.
+- [ ] P0 Roll number uniqueness constraint per `(school, year, class, section)` on `StudentEnrollment`.
+- [ ] P0 Roster state machine (`Pending` → `Verified` → `Locked`) and `RosterChangeRequest` workflow.
+- [ ] P0 Student credential generation using school template, printable login slips, and forced first-login password change.
+- [ ] P0 Audit trail verification for all roster changes.
+
+---
+
+## Phase 4 — Materials & My Learning
+- [ ] P0 Implement full `content` module (models, service, router, policies).
+- [ ] P0 Material upload, tagging (class/subject/chapter), and section distribution.
+- [ ] P0 Student "My Learning" view with material open event logging.
+- [ ] P1 Agent Track A1: PDF text extraction and chunking pipeline in background worker.
+- [ ] P1 Question Extractor LangGraph agent with side-by-side review interface.
+
+---
+
+## Phase 5 — Assignments & Notifications
+- [ ] P0 Implement full `notifications` module (in-app store + email backend adapter).
+- [ ] P0 Assignment lifecycle (draft → published → submission → evaluation).
+- [ ] P1 Agent Track A2: Migrate AI Studio generation to LangGraph `StateGraph` (Worksheets, Quizzes, Papers, Custom Questions).
+- [ ] P1 Assignment Generator and Difficulty Tagger agents with structured outputs and SymPy verification.
+
+---
+
+## Phase 6 — Analytics (4 Levels + Cross-Analytics)
+- [ ] P0 School Admin analytics (school-wide trends, teacher activity indicators).
+- [ ] P0 Coordinator analytics (band summaries, cross-section difficulty comparison).
+- [ ] P0 Teacher 4-level analytics (individual, class, subject, cross-analytics) + material engagement correlation.
+- [ ] P0 Student personal performance map (strictly private).
+- [ ] P1 Agent Track A5: Analytics Insight agent using scoped tool functions with zero text-to-SQL.
+
+---
+
+## Phase 7 — Exams, Calendar, Report Cards & Approvals
+- [ ] P0 Academic calendar with exam clash detection and policy limits.
+- [ ] P0 Band-wide exam planner with Set A–D generation from common blueprints.
+- [ ] P1 Evaluation assistant LangGraph agent for subjective grading suggestions.
+- [ ] P0 Resilient exam player with autosave and tab-switch logging.
+- [ ] P1 Branded report card designer and PDF generation; gradebook.
+
+---
+
+## Phase 8 — Advanced Non-Parked Workflows
+- [ ] P1 Early-warning dashboard and Coordinator intervention list.
+- [ ] P1 Smart student groups and one-click remedial assignment generation.
+- [ ] P1 Substitution manager with automated temporal access revocation.
+- [ ] P2 Student goal tracker, smart revision list, and structured teacher query form.
+

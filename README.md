@@ -21,15 +21,18 @@ Mind is intended to start as a focused engineering/community-service project and
 - Reliable assessment: deterministic scheduling, clear attempt rules and auditable grading.
 - Modular growth: ship a useful academic product before adding adjacent school operations.
 
-## 3. Initial roles
+## 3. Five-Tier Authority Structure
 
-| Role | Main responsibility |
-|---|---|
-| Admin | Configure school, academic year, classes, sections, subjects, teacher assignments, users and policies |
-| Teacher | Access assigned classes/subjects; create, review, publish and evaluate academic material |
-| Student | View assigned work, attempt assessments, submit answers and review permitted feedback |
+| Tier | Role | Scope | Main responsibility |
+|---|---|---|---|
+| 1 | **Platform Admin** | Global (all schools) | Provision and manage schools (tenants), School Admins, feature flags, platform audit logs |
+| 2 | **School Admin** | School (`school_id`) | Configure school profile, academic structure (years, bands, classes, sections, subjects), policies, oversee all staff & student directories |
+| 3 | **Academic Coordinator** | School + Band (`band_id`, e.g. 6–8, 9–10, 11–12) | Manage teachers in assigned band, assignment matrix, designate Class Teachers, verify/lock section rosters, band exam approvals |
+| 4 | **Teacher** *(with Class Teacher flag)* | Assigned `(class, section, subject, year)` | Create/evaluate academic content, AI Studio, Question Bank. **Class Teacher** additionally manages section roster, student creation & login credentials |
+| 5 | **Student** | Enrolled section + roll number | Access assigned tests & materials (My Learning), submit responses, view releases |
 
-A teacher should only see classes/sections and subjects assigned to them. For example, a Mathematics teacher assigned to 11E, 12A and 12D can access the relevant Mathematics curriculum and approved JEE-preparation material for those assignments.
+A teacher sees only classes/sections and subjects assigned to them. A coordinator sees only their assigned class band. Access control is enforced server-side via `authorize(actor, action, resource)`.
+
 
 ## 4. Initial academic scope
 

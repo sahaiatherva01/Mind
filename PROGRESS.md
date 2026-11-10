@@ -1,21 +1,32 @@
-# Mind V1 — Progress & Status Tracker
+# Mind V2 — Progress & Status Tracker
 
-Last Updated: 2026-11-08  
+Last Updated: 2026-11-10  
 Working Product Name: **Mind**  
 Tagline: *Intelligence for Better Learning*
 
 ---
 
-## 1. Overall Phase Status
+## 1. Overall Phase Status (V2 5-Tier Scoped Authority Model)
 
 | Phase | Description | Status | Exit Gate Criteria |
 |---|---|---|---|
-| **Phase 0** | Discovery & Operational Baselines | **COMPLETED** | Baseline decisions documented in `docs/DECISIONS.md`. |
-| **Phase 1** | Product Foundation (Tenancy, Identity, Academics, Audit, Shells) | **COMPLETED** | Multi-tenant boundary enforced; RBAC and assignment-scoped tests pass (11/11 tests green). |
-| **Phase 2** | AI Content Studio (40 Question Types, AI Gateway, Review/Approval) | **COMPLETED** | Teacher can generate, edit, and approve usable draft (14/14 tests green). |
-| **Phase 3** | Assessment Delivery (Publish, Player, Autosave, Grading, Release) | **COMPLETED** | End-to-end authoring to student attempt and evaluation (16/16 tests green). |
-| **Phase 4** | Analytics & Pilot Hardening (Reports, Exports, Hardening, Audit) | **COMPLETED** | Psychometrics, CSV/PDF exports, and security hardening (17/17 tests green). |
-| **Phase 5** | Controlled Expansion Notes & Compliance Documentation | **COMPLETED** | `docs/PHASE5_NOTES.md`, `docs/LEGAL_AND_PRIVACY_OPEN_ITEMS.md`, `docs/USER_GUIDE.md` complete. |
+| **Phase 0** | Baseline & Discovery Report | **IN PROGRESS** | Full repo audit, baseline tests (21/21 passed), docs package updated, Phase 1 plan created. |
+| **Phase 1** | Scoped RBAC Refactor & 5 Tiers | PENDING | `RoleAssignment`, `Band`, `AcademicYear`, `authorize()` central engine, permission matrix tests green. |
+| **Phase 2** | Academic Coordinator & Assignment Matrix | PENDING | Band dashboard, teacher creation, assignment matrix, class teacher designation (1 per section). |
+| **Phase 3** | Teacher: Students, Rosters & Credentials | PENDING | Student creation (Class Teacher/Coordinator), roll numbers, roster lock, login slips, first-login password change. |
+| **Phase 4** | Materials & My Learning | PENDING | `content` module, PDF chunking, Question Extractor agent, student My Learning view. |
+| **Phase 5** | Assignments & Notifications | PENDING | `notifications` module, assignment lifecycle, LangGraph AI Studio generation graph. |
+| **Phase 6** | Analytics (4 Levels + Cross Analytics) | PENDING | School, Coordinator, Teacher (4 levels), Student views; Analytics Insight agent. |
+| **Phase 7** | Exams, Calendar, Report Cards, Approvals | PENDING | Clash detection, Set A–D builder, blueprint validator, subjective evaluation assistant, branded report card PDF. |
+| **Phase 8** | Advanced Non-Parked Workflows | PENDING | Early warning, smart groups, remedial generation, substitution manager. |
+
+---
+
+## 2. Baseline Test & Build Verification (Phase 0)
+- **Backend Tests:** 21/21 passing (`.venv/bin/pytest -v` in 7.01s).
+- **Frontend Build:** Clean compilation with 0 TypeScript/Vite errors (`tsc -b && vite build` in 1.58s).
+- **Git State:** `main` branch, working directory clean.
+
 
 ---
 

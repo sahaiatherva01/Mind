@@ -7,16 +7,17 @@ Secure multi-school support, strict role/assignment authorisation, reliable asse
 
 ```mermaid
 flowchart TB
-  U[Admin / Teacher / Student] --> FE[React + TypeScript Web App]
+  U[Platform Admin / School Admin / Coordinator / Teacher / Student] --> FE[React + TypeScript Web App]
   FE --> API[FastAPI API Layer]
-  API --> AUTH[Authentication & RBAC]
+  API --> AUTH[Central authorize(actor, action, resource)]
   API --> CORE[Academic Domain Services]
   CORE --> DB[(PostgreSQL)]
   CORE --> OBJ[(Object Storage)]
-  CORE --> Q[Redis Job Queue]
+  CORE --> Q[Redis Job Queue / ARQ]
   Q --> WORKER[Background Workers]
-  WORKER --> AI[AI Gateway]
-  AI --> LLM[Model Provider(s)]
+  WORKER --> LG[LangGraph Agent Workflows]
+  LG --> AI[AI Gateway]
+  AI --> LLM[Google Gemini / Mock Provider]
   WORKER --> DB
   API --> OBS[Logs / Metrics / Traces]
   WORKER --> OBS
@@ -24,40 +25,47 @@ flowchart TB
 
 ## 3. Architectural style
 
-Start with a **modular monolith**: one deployable backend with well-separated domain modules. This is simpler to build, test and operate for an early team. Split services only when load, team ownership or reliability needs justify it.
-
-Suggested backend modules:
-- identity: users, sessions, password reset, role assignment
-- tenancy: schools, academic years, institutional settings
-- academics: classes, sections, subjects, curriculum mapping, assignments
-- content: source materials, question bank, generated content
-- generation: prompt templates, model gateway, job orchestration, validation
-- assessments: drafts, versions, publishing, schedules, attempts, submissions
-- evaluation: objective scoring, rubrics, teacher marking, result release
-- analytics: aggregates and reports
-- notifications: in-app and email/push adapters
-- audit: security and business event trail
+Modular monolith with clean domain boundaries:
+- `identity`: users, sessions, password reset, `RoleAssignment`
+- `tenancy`: schools, academic years, `Band`, institutional settings
+- `academics`: classes, sections, subjects, curriculum mapping, `TeacherAssignment`, `StudentEnrollment`, rosters
+- `content`: learning materials, PDF text chunking, Question Bank
+- `ai`: LangGraph agents (extractor, generator, tagger, insight writer, paper builder, evaluation assist)
+- `assessments`: drafts, versions, publishing, schedules, attempts, submissions, blueprints
+- `evaluation`: objective deterministic scoring, rubrics, teacher marking assist, result release
+- `analytics`: aggregates, psychometrics, 4-level and cross-analytics
+- `notifications`: in-app and email adapters
+- `audit`: security, administrative, and academic action event trail
 
 ## 4. Tenant and authorisation model
 
-Every school-owned record carries `school_id`. Every request resolves the authenticated user and active school membership. Server-side policies verify:
-- Admin: permitted school administration actions.
-- Teacher: explicit teacher assignment for class + section + subject.
-- Student: active enrolment and explicit assessment audience.
-- Cross-school access: denied by default.
-Do not rely on hiding UI controls as an authorisation mechanism.
+The centralized policy engine `authorize(actor, action, resource)` evaluates role and scope together:
+- **Platform Admin:** Global platform actions; no `school_id`.
+- **School Admin:** School-wide administration for active `school_id`.
+- **Academic Coordinator:** Scoped strictly to `school_id` + assigned `band_id` (e.g. Classes 9–10).
+- **Teacher:** Scoped to explicit `(school_id, class_id, section_id, subject_id, year_id)`.
+- **Class Teacher:** Scoped to `(school_id, class_id, section_id)` for roster ownership and student credentialing.
+- **Student:** Scoped to enrolled section and own attempt records.
 
-## 5. Data model (logical)
+Cross-tenant and cross-scope access is denied by default.
 
-- School(id, name, timezone, settings)
-- AcademicYear(id, school_id, label, starts_on, ends_on, status)
-- Class(id, school_id, academic_year_id, name)
-- Section(id, class_id, name)
-- Subject(id, school_id, name, code)
-- TeacherAssignment(id, school_id, teacher_id, class_id, section_id, subject_id)
-- StudentEnrollment(id, school_id, student_id, class_id, section_id, status)
-- CurriculumNode(id, school_id, subject_id, grade, chapter, topic, learning_outcome, source_ref)
-- ContentAsset(id, school_id, owner_id, storage_key, metadata)
+## 5. Data model (logical V2)
+
+- `School(id, name, slug, timezone, settings)`
+- `AcademicYear(id, school_id, label, starts_on, ends_on, status)`
+- `Band(id, school_id, name, min_grade, max_grade)`
+- `RoleAssignment(id, user_id, role, school_id, band_id, effective_from, effective_to, status)`
+- `Class(id, school_id, band_id, academic_year_id, name, grade_level)`
+- `Section(id, class_id, name, room)`
+- `Subject(id, school_id, name, code)`
+- `TeacherAssignment(id, school_id, teacher_id, class_id, section_id, subject_id, academic_year_id, is_class_teacher, status)`
+- `StudentEnrollment(id, school_id, student_id, class_id, section_id, academic_year_id, roll_number, status)`
+- `RosterStatus(id, section_id, academic_year_id, status, verified_by_id, locked_at)`
+- `RosterChangeRequest(id, section_id, requester_id, approver_id, changes_json, status)`
+- `ApprovalRequest(id, school_id, request_type, requester_id, approver_id, payload_json, status)`
+- `CurriculumNode(id, school_id, subject_id, grade, chapter, topic, learning_outcome, source_ref)`
+- `ContentAsset(id, school_id, owner_id, storage_key, metadata)`
+
 - Question(id, school_id, author_id, type, prompt, marks, difficulty, topic_id, answer_data, status, version)
 - GenerationJob(id, school_id, requester_id, input_json, model, prompt_version, status, output_ref, error_code)
 - Assessment(id, school_id, creator_id, class_id, section_id, subject_id, title, type, status, settings, version)

@@ -9,107 +9,104 @@ This is a proposed contract outline. Exact schemas and status codes should be fi
 
 ## 1. Conventions
 - Use UUID identifiers.
-- Use pagination: `?limit=20&cursor=...`.
-- Use ISO 8601 timestamps; store UTC and include timezone context for schedules.
-- Use consistent errors: `{ "error": { "code": "...", "message": "...", "details": {} } }`.
-- Mutating requests should support idempotency where retries could duplicate work.
-- All school-scoped endpoints enforce tenant membership and role permissions.
+- Use cursor pagination: `?limit=20&cursor=...`.
+- Use ISO 8601 UTC timestamps with timezone context.
+- Central authorization: Every endpoint authorizes via `authorize(actor, action, resource)`.
+- Use consistent error envelopes: `{ "error": { "code": "...", "message": "...", "details": {} } }`.
+- Mutating requests support idempotency.
+- All school-scoped endpoints enforce tenant boundary and role/scope permissions.
 
-## 2. Authentication
+## 2. Authentication & Identity
+| Method | Endpoint | Scope / Role | Purpose |
+|---|---|---|---|
+| POST | `/auth/login` | Public | Authenticate session (sets HttpOnly cookie) |
+| POST | `/auth/logout` | Authenticated | Terminate session |
+| POST | `/auth/forgot-password` | Public | Request password recovery |
+| POST | `/auth/reset-password` | Public | Complete password recovery |
+| POST | `/auth/change-password` | Authenticated | Required on first student login |
+| GET | `/me` | Authenticated | Active user profile, roles, and scope |
+
+## 3. Platform Administration (Platform Admin Only)
 | Method | Endpoint | Purpose |
 |---|---|---|
-| POST | `/auth/login` | Authenticate |
-| POST | `/auth/logout` | End session |
-| POST | `/auth/refresh` | Refresh session/token if token strategy is used |
-| POST | `/auth/forgot-password` | Start password recovery |
-| POST | `/auth/reset-password` | Complete password recovery |
-| GET | `/me` | Current user and active school context |
+| GET/POST | `/platform/schools` | List / provision new schools (tenants) |
+| GET/PATCH | `/platform/schools/{id}` | Read / update school status (active/suspended) |
+| POST | `/platform/schools/{id}/admins` | Provision School Admin for school |
+| POST | `/platform/schools/{id}/coordinators` | Provision Coordinator assigned to band |
+| GET | `/platform/dashboard` | Platform metrics (schools, users, AI runs) |
+| GET | `/platform/audit-logs` | Cross-school platform audit trail |
 
-## 3. Academic administration
+## 4. School Administration (School Admin)
 | Method | Endpoint | Purpose |
 |---|---|---|
-| GET/POST | `/schools/{schoolId}/academic-years` | List/create academic years |
-| GET/POST | `/classes` | List/create classes |
-| GET/POST | `/classes/{classId}/sections` | List/create sections |
-| GET/POST | `/subjects` | List/create subjects |
-| GET/POST | `/teacher-assignments` | Assign teachers to class/section/subject |
-| GET/POST | `/student-enrollments` | Enrol students in class/section |
+| GET/PATCH | `/schools/{id}/profile` | School profile, branding, letterhead |
+| GET/POST | `/schools/{id}/academic-years` | Manage academic years |
+| GET/POST | `/schools/{id}/bands` | Configurable class bands (e.g. 6–8, 9–10, 11–12) |
+| GET/POST | `/classes` | List/create classes linked to band & year |
+| GET/POST | `/classes/{id}/sections` | Manage sections |
+| GET/POST | `/subjects` | Manage school subjects |
+| GET | `/school/analytics` | School-wide analytics and early warnings |
 
-Admin-only operations must be checked server-side.
-
-## 4. AI generation
+## 5. Academic Coordinator (Band-Scoped)
 | Method | Endpoint | Purpose |
 |---|---|---|
-| POST | `/generation/worksheets` | Queue worksheet generation |
-| POST | `/generation/quizzes` | Queue quiz generation |
-| POST | `/generation/question-papers` | Queue paper generation |
-| POST | `/generation/questions` | Queue custom question generation |
-| GET | `/generation/jobs/{jobId}` | Read job status/result |
-| POST | `/generation/jobs/{jobId}/cancel` | Cancel if still cancellable |
+| GET | `/coordinator/dashboard` | Band-scoped metrics and upcoming exams |
+| GET/POST | `/coordinator/teachers` | List/create teachers within band |
+| POST | `/coordinator/teachers/bulk` | Bulk Excel teacher import with pre-commit validation |
+| GET/POST | `/coordinator/assignments` | Assignment matrix (Teacher × Class × Section × Subject) |
+| POST | `/coordinator/sections/{id}/class-teacher` | Designate single Class Teacher |
+| POST | `/coordinator/rosters/{id}/verify` | Verify section roster |
+| POST | `/coordinator/rosters/{id}/lock` | Lock section roster |
+| GET | `/coordinator/analytics` | Band cross-section analytics |
 
-Example request:
-```json
-{
-  "class_id": "uuid",
-  "section_id": "uuid",
-  "subject_id": "uuid",
-  "chapter": "Quadratic Equations",
-  "topics": ["factorisation", "nature of roots"],
-  "difficulty": {"easy": 30, "medium": 50, "hard": 20},
-  "question_types": ["mcq", "short_answer"],
-  "question_count": 20,
-  "total_marks": 40,
-  "language": "en"
-}
-```
+## 6. Teacher & Class Teacher
+| Method | Endpoint | Role | Purpose |
+|---|---|---|---|
+| GET/POST | `/rosters/{sectionId}/students` | Class Teacher | Add student(s) single or CSV with roll numbers |
+| GET | `/rosters/{sectionId}/credentials` | Class Teacher | Printable credential slips |
+| POST | `/rosters/{sectionId}/request-change` | Class Teacher | Request post-lock roster edit (`RosterChangeRequest`) |
+| GET/POST | `/content/materials` | Teacher | Upload/distribute PDFs to assigned sections |
+| POST | `/content/materials/{id}/extract-questions` | Teacher | Extract questions from uploaded PDF via LangGraph |
+| POST | `/generation/worksheets` | Teacher | Queue LangGraph worksheet generation |
+| POST | `/generation/quizzes` | Teacher | Queue LangGraph quiz generation |
+| POST | `/generation/question-papers` | Teacher | Queue LangGraph question paper generation |
+| POST | `/generation/custom` | Teacher | Queue custom questions generation |
+| GET | `/generation/jobs/{id}` | Teacher | Read generation job status |
+| POST | `/generation/jobs/{id}/cancel` | Teacher | Cancel running job |
+| GET/POST | `/questions` | Teacher | Question Bank CRUD |
+| POST | `/assessments` | Teacher | Create assessment draft |
+| POST | `/assessments/{id}/approve` | Teacher | Approve draft (mandatory before publish) |
+| POST | `/assessments/{id}/publish` | Teacher | Publish assessment to assigned sections |
+| POST | `/assessments/{id}/schedule` | Teacher | Schedule assessment |
+| GET | `/teacher/evaluation-queue` | Teacher | Subjective responses grading queue |
+| PATCH | `/evaluations/{id}` | Teacher | Grade subjective response with rubric/AI assist |
+| POST | `/assessments/{id}/release-results` | Teacher | Release results to students |
+| GET | `/teacher/analytics` | Teacher | 4-level analytics & material engagement |
 
-Example response:
-```json
-{
-  "job_id": "uuid",
-  "status": "queued",
-  "created_at": "2026-11-07T12:00:00Z"
-}
-```
-
-## 5. Content and assessment authoring
+## 7. Student Assessment & Learning
 | Method | Endpoint | Purpose |
 |---|---|---|
-| GET/POST | `/questions` | List/create question drafts |
-| GET/PATCH/DELETE | `/questions/{questionId}` | Read/update/delete draft |
-| POST | `/assessments` | Create assessment draft |
-| GET/PATCH | `/assessments/{assessmentId}` | Read/update draft |
-| POST | `/assessments/{assessmentId}/approve` | Approve teacher-reviewed content |
-| POST | `/assessments/{assessmentId}/publish` | Publish approved version |
-| POST | `/assessments/{assessmentId}/schedule` | Schedule publication/availability |
-| GET | `/assessments` | List authorised assessments |
+| GET | `/student/dashboard` | Active enrollments, upcoming exams, deadlines |
+| GET | `/student/my-learning` | Teacher-shared PDFs and learning materials |
+| POST | `/student/my-learning/{id}/open` | Track material opening event |
+| GET | `/student/assignments` | List assigned assessments |
+| GET | `/assessments/{id}/instructions` | Student-safe test instructions (zero key leakage) |
+| POST | `/assessments/{id}/attempts` | Start timed attempt |
+| PUT | `/attempts/{id}/responses/{itemId}` | Autosave response |
+| POST | `/attempts/{id}/submit` | Submit attempt (idempotent) |
+| GET | `/attempts/{id}/status` | Check submission status |
+| GET | `/student/results` | View released results & teacher feedback |
+| GET | `/student/performance-map` | Topic strength map (private) |
 
-## 6. Student assessment
+## 8. Approvals & Notifications
 | Method | Endpoint | Purpose |
 |---|---|---|
-| GET | `/student/assignments` | List assignments for current student |
-| GET | `/assessments/{assessmentId}/instructions` | Read student-safe assessment details |
-| POST | `/assessments/{assessmentId}/attempts` | Start attempt |
-| PUT | `/attempts/{attemptId}/responses/{itemId}` | Save response |
-| POST | `/attempts/{attemptId}/submit` | Submit attempt |
-| GET | `/attempts/{attemptId}/status` | Read attempt/submission status |
+| GET/POST | `/approvals` | List / submit generic approval requests |
+| PATCH | `/approvals/{id}` | Approve or reject request (Coordinator / Admin) |
+| GET | `/notifications` | List in-app notifications |
+| PATCH | `/notifications/{id}/read` | Mark notification as read |
+| GET | `/audit-events` | Scoped audit event trail |
 
-Never return answer keys or teacher-only metadata in student endpoints.
-
-## 7. Evaluation and analytics
-| Method | Endpoint | Purpose |
-|---|---|---|
-| GET | `/teacher/evaluation-queue` | Pending subjective responses |
-| PATCH | `/evaluations/{evaluationId}` | Save teacher marks/feedback |
-| POST | `/assessments/{assessmentId}/release-results` | Release results |
-| GET | `/analytics/classes/{classId}` | Class-level analytics |
-| GET | `/analytics/assessments/{assessmentId}` | Assessment analytics |
-| GET | `/analytics/topics` | Topic-level trends for authorised scope |
-
-## 8. Notifications, files and audit
-- `GET /notifications`
-- `POST /files/presigned-upload` (if direct object-storage upload is used)
-- `GET /audit-events` (admin/authorised roles only)
 
 ## 9. State model
 

@@ -78,7 +78,22 @@ This document records architectural, product, and technical decisions made durin
 
 ---
 
-## 2026-11-08 — DEC-003: DPDP Act (India) Alignment & AI Data Minimization
+## 2026-11-10 — DEC-004: Mind V2 5-Tier Scoped Authority Model and LangGraph Orchestration
+
+- **Status:** Approved
+- **Context:** Mind expands from a flat 3-role system into a 5-tier scoped academic authority structure matching real school hierarchies.
+- **Decisions:**
+  1. **5-Tier Role Model:** Exact roles: `Platform Admin` → `School Admin` → `Academic Coordinator` (band-scoped) → `Teacher` (with `Class Teacher` flag) → `Student`. The old single `users.role` column is replaced by `RoleAssignment`.
+  2. **Scoped Authorization Engine:** Central `authorize(actor, action, resource)` entry point in `backend/app/core/policies.py` evaluating role + tenant + band + class/section/subject scopes together.
+  3. **Configurable Class Bands:** Bands (e.g. 6–8, 9–10, 11–12) are stored as configurable database entities per school, not hard-coded.
+  4. **Student Identity & Roll Numbers:** Stable internal `user_id` across promotions. Roll numbers are scoped to `(school, academic_year, class, section)` on `StudentEnrollment`. Login ID template configurable per school (default: admission number).
+  5. **Roster Lifecycle & Locking:** Student onboarding by Class Teacher (own section) or Coordinator (own band). Roster lifecycle: `Pending` -> `Verified` -> `Locked`. Pending students cannot authenticate. Post-lock modifications require `RosterChangeRequest` approval.
+  6. **Single Class Teacher Invariant:** Exactly one Class Teacher per section per academic year, enforced by unique database constraint.
+  7. **No Cross-Band Assignments in V1:** Coordinators create teachers and assignments strictly within their band.
+  8. **AI Architecture with LangGraph:** AI Studio generation migrated to LangGraph `StateGraph` workflows with Pydantic structured output, SymPy deterministic math verification, model critics, and bounded repair loops. Deterministic tasks (analytics computation, blueprint marks totals, grading objective items) strictly forbid LLMs.
+- **Reason:** Real-world school governance requires fine-grained band and section delegation without cross-boundary data leakage.
+- **Reversible:** Architectural core; migrations and tests must adhere strictly.
+
 
 - **Status:** Approved & Documented
 - **Context:** Mind operates in Indian schools with minors (Classes 6–12).

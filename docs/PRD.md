@@ -27,39 +27,46 @@ Make high-quality academic assessment creation and practice faster, more consist
 - Public student social network or open content marketplace.
 - Automated claims of board/curriculum compliance without verified content mapping.
 
-## 4. Personas
+## 4. Personas (5-Tier Authority Structure)
 
-### Admin
-Needs to configure the institution, academic year, classes, sections, subjects, user accounts, teacher assignments and access policies.
+### 1. Platform Admin
+Controls every school across the platform: provisions schools, creates School Admins, assigns Academic Coordinators to bands, monitors platform metrics and audit logs.
 
-### Teacher
-Needs to prepare reliable academic material quickly, customise it, review answer keys, publish/schedule tests and understand student performance.
+### 2. School Admin
+Controls a single school tenant: manages school profile, branding, academic years, configurable class bands, staff overview, student directory, policies, and school-wide analytics.
 
-### Student
-Needs a simple place to find assigned work, understand instructions, complete attempts, submit answers and review released results/feedback.
+### 3. Academic Coordinator
+Controls one academic band (e.g. 6–8, 9–10, 11–12): creates teachers, manages assignment matrix (Teacher × Class × Section × Subject), designates Class Teachers, verifies/locks rosters, and approves band-wide papers.
+
+### 4. Teacher (with Class Teacher Designation)
+Teaches assigned class + section + subject. Uses AI Studio, Question Bank, delivers assessments, and conducts evaluations. **Class Teachers** uniquely own their section roster (create students with roll numbers, trigger verification/locking, issue login credential slips).
+
+### 5. Student
+Identified by roll number and school-scoped login ID. Attempts assigned assessments, accesses teacher-shared materials in My Learning, reviews released results and feedback.
 
 ## 5. Functional requirements
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-01 | Admin can create/manage academic years, classes and sections | Must |
-| FR-02 | Admin can create subjects and assign teachers to class/section/subject combinations | Must |
-| FR-03 | Users authenticate and receive role-scoped access | Must |
-| FR-04 | Teacher sees only assigned classes, sections and subjects | Must |
-| FR-05 | Teacher can generate worksheets with curriculum and difficulty context | Must |
-| FR-06 | Teacher can generate quizzes containing MCQs and short answers | Must |
-| FR-07 | Teacher can generate question papers with marks and section structure | Must |
-| FR-08 | Teacher can generate individual questions with topic/type/difficulty/count controls | Must |
-| FR-09 | Teacher can edit, regenerate selected items, save drafts and approve content | Must |
-| FR-10 | Teacher can publish now or schedule an assessment | Must |
-| FR-11 | Student can view assigned work and attempt within availability rules | Must |
-| FR-12 | System autosaves answers and records submission timestamps | Must |
-| FR-13 | Objective questions can be automatically evaluated | Must |
-| FR-14 | Subjective evaluation supports teacher marking and optional AI-assisted suggestions | Should |
-| FR-15 | Teacher can view scores, question analysis and topic-level trends | Should |
-| FR-16 | Teacher can assign targeted practice based on performance | Could |
-| FR-17 | Admin can view audit logs and manage user status | Should |
-| FR-18 | Export/print assessment and results in PDF/CSV | Should |
+| FR-01 | Platform Admin can provision schools, create School Admins and assign Coordinators to bands | Must |
+| FR-02 | School Admin can configure school profile, academic years, class bands, classes, sections, and subjects | Must |
+| FR-03 | Academic Coordinator can create teachers and assign Class/Section/Subject combinations within their band | Must |
+| FR-04 | Academic Coordinator designates exactly one Class Teacher per section; verifies and locks section rosters | Must |
+| FR-05 | Class Teacher can add students (single/CSV) with roll numbers and print credential slips | Must |
+| FR-06 | Users authenticate and receive role-scoped access via centralized `authorize()` engine | Must |
+| FR-07 | Teacher sees only assigned classes, sections and subjects; Coordinator sees only their band | Must |
+| FR-08 | Teacher can generate curriculum-grounded assessments via LangGraph AI Studio pipeline | Must |
+| FR-09 | Teacher can edit, regenerate selected items, save drafts and approve content before publishing | Must |
+| FR-10 | Teacher can publish now or schedule an assessment to assigned sections | Must |
+| FR-11 | Student can view assigned work, access My Learning materials, and attempt tests | Must |
+| FR-12 | System autosaves answers and records submission timestamps with server time authoritative | Must |
+| FR-13 | Objective questions are automatically evaluated by deterministic engine (no LLM) | Must |
+| FR-14 | Subjective evaluation supports teacher marking with AI-assisted suggestions confirmed by teacher | Should |
+| FR-15 | 4-Level Analytics: Individual student, class, subject, and cross-analytics (section-vs-section) | Should |
+| FR-16 | Teacher can assign targeted remedial practice based on performance gaps | Should |
+| FR-17 | Audit logs record every administrative, roster, and publishing action | Must |
+| FR-18 | Export/print assessment and results in PDF/CSV; printable report cards | Should |
+
 
 ## 6. AI generation requirements
 
