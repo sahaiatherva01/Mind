@@ -445,11 +445,13 @@ async def seed():
         if not inv_res.scalar_one_or_none():
             intervention = CoordinatorIntervention(
                 school_id=school.id,
-                coordinator_id=senior_coord.id,
+                band_id=band_map["Senior Secondary (11-12)"].id,
                 student_id=aarav.id,
-                risk_score=75,
-                action_type="remedial_session",
+                created_by=senior_coord.id,
+                trigger_reason="Low recent scores in Calculus Limits and zero materials opened.",
+                severity="medium",
                 status="in_progress",
+                action_taken="Remedial session scheduled with PGT Mathematics.",
                 notes="Pedagogical intervention initiated for Calculus limit evaluation.",
             )
             session.add(intervention)
@@ -464,14 +466,15 @@ async def seed():
         if not sg_res.scalar_one_or_none():
             group = SmartStudentGroup(
                 school_id=school.id,
-                teacher_id=maths_teacher.id,
                 class_id=cls_11.id,
                 section_id=sec_11e.id,
                 subject_id=math_sub.id,
+                created_by=maths_teacher.id,
                 name="Calculus Remedial Cohort",
                 group_type="remedial",
-                student_ids=[aarav.id],
-                weak_topics=["Limits & Continuity", "Derivatives", "Product Rule"],
+                criteria_json={"topic": "Limits", "threshold": 60},
+                student_ids_json=[aarav.id],
+                weak_topics_json=["Limits & Continuity", "Derivatives", "Product Rule"],
             )
             session.add(group)
 
@@ -483,10 +486,11 @@ async def seed():
             goal = StudentAcademicGoal(
                 school_id=school.id,
                 student_id=aarav.id,
-                goal_title="Master ICSE Calculus Limits & Derivatives",
-                target_pct=85,
-                current_pct=72,
+                subject_id=math_sub.id,
+                target_score_pct=85.0,
+                current_score_pct=72.0,
                 status="in_progress",
+                notes="Master ICSE Calculus Limits & Derivatives",
             )
             session.add(goal)
 
@@ -499,12 +503,11 @@ async def seed():
                 school_id=school.id,
                 student_id=aarav.id,
                 teacher_id=maths_teacher.id,
-                class_id=cls_11.id,
-                section_id=sec_11e.id,
-                subject_name="Mathematics",
-                question_text="How do we compute the derivative of f(x) = x^x using logarithmic differentiation?",
+                subject_id=math_sub.id,
+                query_text="How do we compute the derivative of f(x) = x^x using logarithmic differentiation?",
                 status="answered",
-                reply_text="Take natural log on both sides: ln(y) = x ln(x). Then differentiate implicitly: (1/y) dy/dx = ln(x) + 1.",
+                response_text="Take natural log on both sides: ln(y) = x ln(x). Then differentiate implicitly: (1/y) dy/dx = ln(x) + 1.",
+                responded_at=now_utc,
             )
             session.add(doubt)
 
