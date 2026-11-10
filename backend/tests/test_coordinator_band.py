@@ -23,7 +23,7 @@ async def get_token(client: AsyncClient, email: str, password: str) -> str:
 @pytest.mark.asyncio
 async def test_coordinator_band_summary(client: AsyncClient, seeded_test_data):
     """Coordinator can view band summary metrics for Senior Secondary (11-12)."""
-    token = await get_token(client, "coord1@school1.org", "CoordPass123!")
+    token = await get_token(client, "coordinator@school1.org", "CoordPass123!")
 
     res = await client.get("/api/v1/coordinator/band-summary", headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 200, res.text
@@ -43,7 +43,7 @@ async def test_coordinator_band_summary(client: AsyncClient, seeded_test_data):
 @pytest.mark.asyncio
 async def test_coordinator_band_isolation_denies_cross_band(client: AsyncClient, seeded_test_data):
     """Coordinator of Classes 11-12 cannot assign a teacher to Class 9 (cross-band protection)."""
-    token = await get_token(client, "coord1@school1.org", "CoordPass123!")
+    token = await get_token(client, "coordinator@school1.org", "CoordPass123!")
     class_9_id = seeded_test_data["class_9"].id
     sec_9a_id = seeded_test_data["sec_9a"].id
     sub_math_id = seeded_test_data["sub_math"].id
@@ -70,7 +70,7 @@ async def test_coordinator_band_isolation_denies_cross_band(client: AsyncClient,
 @pytest.mark.asyncio
 async def test_duplicate_class_teacher_rejected(client: AsyncClient, seeded_test_data):
     """Exactly one Class Teacher is allowed per section; assigning a second Class Teacher is rejected with 409 Conflict."""
-    token = await get_token(client, "coord1@school1.org", "CoordPass123!")
+    token = await get_token(client, "coordinator@school1.org", "CoordPass123!")
     admin_token = await get_token(client, "admin@school1.org", "AdminPass123!")
 
     # 1. Create a second teacher in the school
@@ -112,7 +112,7 @@ async def test_duplicate_class_teacher_rejected(client: AsyncClient, seeded_test
 @pytest.mark.asyncio
 async def test_coordinator_can_create_and_assign_teacher_within_band(client: AsyncClient, seeded_test_data):
     """Coordinator can provision a new teacher and assign them within their grade band."""
-    token = await get_token(client, "coord1@school1.org", "CoordPass123!")
+    token = await get_token(client, "coordinator@school1.org", "CoordPass123!")
     class_12_id = seeded_test_data["class_12"].id
     sec_12d_id = seeded_test_data["sec_12d"].id
     sub_phy_id = seeded_test_data["sub_phy"].id
@@ -143,7 +143,7 @@ async def test_coordinator_can_create_and_assign_teacher_within_band(client: Asy
 @pytest.mark.asyncio
 async def test_coordinator_assignment_matrix(client: AsyncClient, seeded_test_data):
     """Coordinator fetches assignment matrix containing only classes from their band."""
-    token = await get_token(client, "coord1@school1.org", "CoordPass123!")
+    token = await get_token(client, "coordinator@school1.org", "CoordPass123!")
 
     res = await client.get("/api/v1/coordinator/assignments", headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 200, res.text
@@ -158,7 +158,7 @@ async def test_coordinator_assignment_matrix(client: AsyncClient, seeded_test_da
 @pytest.mark.asyncio
 async def test_coordinator_teacher_status_toggle(client: AsyncClient, seeded_test_data):
     """Coordinator can deactivate and re-enable a teacher who teaches in their band."""
-    token = await get_token(client, "coord1@school1.org", "CoordPass123!")
+    token = await get_token(client, "coordinator@school1.org", "CoordPass123!")
     teacher1_id = seeded_test_data["teacher1"].id
 
     # Deactivate teacher1
@@ -178,3 +178,81 @@ async def test_coordinator_teacher_status_toggle(client: AsyncClient, seeded_tes
     )
     assert res_re.status_code == 200, res_re.text
     assert res_re.json()["status"] == "active"
+
+
+@pytest.mark.asyncio
+async def test_coordinator_cannot_toggle_teacher_outside_band(client: AsyncClient, seeded_test_data):
+    """Coordinator cannot toggle status of a teacher who has no assignments in their band."""
+    token = await get_token(client, "coordinator@school1.org", "CoordPass123!")
+    admin_token = await get_token(client, "admin@school1.org", "AdminPass123!")
+
+    # 1. Admin creates a Middle School teacher (Class 9)
+    new_t_res = await client.post(
+        "/api/v1/users",
+        json={
+            "email": "middle.teacher@school1.org",
+            "password": "TeacherPass789!",
+            "full_name": "Middle School Faculty",
+            "role": "teacher",
+        },
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert new_t_res.status_code == 201
+    middle_teacher_id = new_t_res.json()["id"]
+
+    # Assign to Class 9 (outside senior coordinator's band)
+    class_9_id = seeded_test_data["class_9"].id
+    sec_9a_id = seeded_test_data["sec_9a"].id
+    sub_math_id = seeded_test_data["sub_math"].id
+
+    asgn_res = await client.post(
+        "/api/v1/teacher-assignments",
+        json={
+            "teacher_id": middle_teacher_id,
+            "class_id": class_9_id,
+            "section_id": sec_9a_id,
+            "subject_id": sub_math_id,
+        },
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert asgn_res.status_code == 201
+
+    # 2. Senior Coordinator attempts to toggle middle teacher status -> 403 Forbidden!
+    res = await client.patch(
+        f"/api/v1/coordinator/teachers/{middle_teacher_id}/status",
+        json={"active": False},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert res.status_code == 403, f"Expected 403 Forbidden, got {res.status_code}"
+
+
+@pytest.mark.asyncio
+async def test_coordinator_delete_assignment(client: AsyncClient, seeded_test_data):
+    """Coordinator can remove an assignment within their band."""
+    token = await get_token(client, "coordinator@school1.org", "CoordPass123!")
+    class_12_id = seeded_test_data["class_12"].id
+    sec_12d_id = seeded_test_data["sec_12d"].id
+    sub_phy_id = seeded_test_data["sub_phy"].id
+    teacher1_id = seeded_test_data["teacher1"].id
+
+    # Create assignment
+    asgn_res = await client.post(
+        "/api/v1/coordinator/assignments",
+        json={
+            "teacher_id": teacher1_id,
+            "class_id": class_12_id,
+            "section_id": sec_12d_id,
+            "subject_id": sub_phy_id,
+            "is_class_teacher": False,
+        },
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert asgn_res.status_code == 201
+    asgn_id = asgn_res.json()["id"]
+
+    # Delete assignment
+    del_res = await client.delete(
+        f"/api/v1/coordinator/assignments/{asgn_id}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert del_res.status_code == 204
