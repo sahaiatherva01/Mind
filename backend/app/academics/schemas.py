@@ -192,3 +192,66 @@ class BandSummaryResponse(BaseModel):
     total_teachers: int
     total_students: int
     class_teachers: Dict[str, Optional[str]] = {}  # section_id -> teacher_name
+
+
+class StudentCreateRequest(BaseModel):
+    full_name: str = Field(..., min_length=2, max_length=150)
+    roll_number: str = Field(..., min_length=1, max_length=50)
+    email: Optional[str] = None
+    password: Optional[str] = None
+
+
+class StudentCredentialSlipResponse(BaseModel):
+    student_id: str
+    full_name: str
+    roll_number: str
+    login_email: str
+    initial_password: str
+    class_name: str
+    section_name: str
+    school_name: str
+    must_change_password: bool = True
+
+
+class RosterStatusUpdateRequest(BaseModel):
+    status: str = Field(..., pattern="^(pending|verified|locked)$")
+
+
+class RosterChangeCreateRequest(BaseModel):
+    change_type: str = Field(..., pattern="^(add_student|remove_student|update_roll)$")
+    student_data: Dict[str, Any]
+    reason: str = Field(..., min_length=5, max_length=500)
+
+
+class RosterChangeReviewRequest(BaseModel):
+    status: str = Field(..., pattern="^(approved|rejected)$")
+    review_notes: Optional[str] = None
+
+
+class RosterChangeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    section_id: str
+    requested_by_id: str
+    requested_by_name: Optional[str] = None
+    change_type: str
+    student_data: Dict[str, Any]
+    reason: str
+    status: str
+    reviewed_by_id: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    review_notes: Optional[str] = None
+    created_at: datetime
+
+
+class SectionRosterResponse(BaseModel):
+    section_id: str
+    section_name: str
+    class_id: str
+    class_name: str
+    roster_status: str
+    class_teacher_id: Optional[str] = None
+    class_teacher_name: Optional[str] = None
+    students: List[StudentEnrollmentResponse]
+    total_students: int
