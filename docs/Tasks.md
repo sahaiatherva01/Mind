@@ -43,11 +43,11 @@ Priorities: P0 = Phase exit blocker, P1 = Phase feature, P2 = Advanced.
 ---
 
 ## Phase 4 — Materials & My Learning
-- [ ] P0 Implement full `content` module (models, service, router, policies).
-- [ ] P0 Material upload, tagging (class/subject/chapter), and section distribution.
-- [ ] P0 Student "My Learning" view with material open event logging.
-- [ ] P1 Agent Track A1: PDF text extraction and chunking pipeline in background worker.
-- [ ] P1 Question Extractor LangGraph agent with side-by-side review interface.
+- [x] P0 Implement full `content` module (models, service, router, policies).
+- [x] P0 Material upload, tagging (class/subject/chapter), and section distribution.
+- [x] P0 Student "My Learning" view with material open event logging.
+- [x] P1 Agent Track A1: PDF text extraction and chunking pipeline in background worker.
+- [x] P1 Question Extractor LangGraph agent with side-by-side review interface.
 
 ---
 

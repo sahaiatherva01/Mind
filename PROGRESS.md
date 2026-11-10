@@ -14,18 +14,18 @@ Tagline: *Intelligence for Better Learning*
 | **Phase 1** | Scoped RBAC Refactor & 5 Tiers | **COMPLETE** | `RoleAssignment`, `Band`, `AcademicYear`, `authorize()` central engine, 25/25 tests green, zero legacy role references. |
 | **Phase 2** | Academic Coordinator & Assignment Matrix | **COMPLETE** | Band dashboard, teacher creation within band, assignment matrix, 1 Class Teacher constraint enforced, 33/33 tests green. |
 | **Phase 3** | Teacher: Students, Rosters & Credentials | **COMPLETE** | Class Teacher student onboarding, unique roll numbers, roster lock, credential slips, first-login password change, 40/40 tests green. |
-| **Phase 4** | Materials & My Learning | **NEXT** | `content` module, PDF chunking, Question Extractor agent, student My Learning view. |
-| **Phase 5** | Assignments & Notifications | PENDING | `notifications` module, assignment lifecycle, LangGraph AI Studio generation graph. |
+| **Phase 4** | Materials & My Learning | **COMPLETE** | `content` module, PDF chunking, Question Extractor agent with side-by-side review, student My Learning view & open tracking, 47/47 tests green. |
+| **Phase 5** | Assignments & Notifications | **NEXT** | `notifications` module, assignment lifecycle, LangGraph AI Studio generation graph. |
 | **Phase 6** | Analytics (4 Levels + Cross Analytics) | PENDING | School, Coordinator, Teacher (4 levels), Student views; Analytics Insight agent. |
 | **Phase 7** | Exams, Calendar, Report Cards, Approvals | PENDING | Clash detection, Set A–D builder, blueprint validator, subjective evaluation assistant, branded report card PDF. |
 | **Phase 8** | Advanced Non-Parked Workflows | PENDING | Early warning, smart groups, remedial generation, substitution manager. |
 
 ---
 
-## 2. Test & Build Verification (Phase 3 Status)
-- **Backend Tests:** 40/40 passing (`.venv/bin/pytest backend/tests/ -v` in 17.56s).
-- **Frontend Build:** Clean compilation with 0 TypeScript/Vite errors (`npm run build --prefix frontend` in 1.68s).
-- **Database Migrations:** Baseline `f0506b03ca22` + Phase 1 `766e3fbe416b_feat_rbac_5_tier_role_assignments_and_bands.py` stamped at head.
+## 2. Test & Build Verification (Phase 4 Status)
+- **Backend Tests:** 47/47 passing (`.venv/bin/pytest backend/tests/ -v` in 23.64s).
+- **Frontend Build:** Clean compilation with 0 TypeScript/Vite errors (`npm run build --prefix frontend` in 1.64s).
+- **Database Migrations:** Baseline `f0506b03ca22` + Phase 1 `766e3fbe416b` + Phase 4 `50d2b9cc5c0d` stamped at head.
 - **Git State:** `main` branch, working tree modified for manual review. All changes uncommitted.
 
 ---
