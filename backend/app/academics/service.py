@@ -210,6 +210,9 @@ async def list_teacher_assignments(
             "class_id": a.class_id,
             "section_id": a.section_id,
             "subject_id": a.subject_id,
+            "academic_year_id": a.academic_year_id,
+            "is_class_teacher": a.is_class_teacher,
+            "status": a.status,
             "teacher_name": a.teacher.full_name if a.teacher else None,
             "class_name": a.class_obj.name if a.class_obj else None,
             "section_name": a.section.name if a.section else None,
@@ -226,13 +229,16 @@ async def create_teacher_assignment(
     actor_id: Optional[str] = None
 ) -> Dict[str, Any]:
     # Verify teacher exists and has teacher role
-    user_stmt = select(User).where(User.id == data.teacher_id, User.school_id == school_id)
+    user_stmt = (
+        select(User)
+        .options(selectinload(User.role_assignments))
+        .where(User.id == data.teacher_id, User.school_id == school_id)
+    )
     u_res = await db.execute(user_stmt)
     teacher = u_res.scalar_one_or_none()
     teacher_roles = [r.role for r in teacher.role_assignments if r.status == "active"] if teacher else []
     if not teacher or not ({"teacher", "admin", "school_admin", "academic_coordinator"}.intersection(teacher_roles) or teacher.role in ("teacher", "admin", "school_admin")):
         raise ValidationException("Assigned user must exist and have role 'teacher' or 'admin'")
-
 
     # Check duplicate assignment
     dup_stmt = select(TeacherAssignment).where(
@@ -246,12 +252,35 @@ async def create_teacher_assignment(
     if res_dup.scalar_one_or_none():
         raise ConflictException("This teacher is already assigned to this class, section, and subject")
 
+    # Enforce exactly one Class Teacher per section constraint
+    if data.is_class_teacher:
+        ct_stmt = (
+            select(TeacherAssignment)
+            .options(selectinload(TeacherAssignment.teacher))
+            .where(
+                TeacherAssignment.school_id == school_id,
+                TeacherAssignment.section_id == data.section_id,
+                TeacherAssignment.is_class_teacher == True,
+                TeacherAssignment.status == "active",
+            )
+        )
+        if data.academic_year_id:
+            ct_stmt = ct_stmt.where(TeacherAssignment.academic_year_id == data.academic_year_id)
+        ct_res = await db.execute(ct_stmt)
+        existing_ct = ct_res.scalars().first()
+        if existing_ct and existing_ct.teacher_id != data.teacher_id:
+            teacher_name = existing_ct.teacher.full_name if existing_ct.teacher else "another teacher"
+            raise ConflictException(f"This section already has a designated Class Teacher ({teacher_name}). Exactly one Class Teacher is permitted per section.")
+
     assignment = TeacherAssignment(
         school_id=school_id,
         teacher_id=data.teacher_id,
         class_id=data.class_id,
         section_id=data.section_id,
         subject_id=data.subject_id,
+        academic_year_id=data.academic_year_id,
+        is_class_teacher=data.is_class_teacher,
+        status=data.status,
     )
     db.add(assignment)
     await db.flush()
@@ -268,6 +297,7 @@ async def create_teacher_assignment(
             "class_id": assignment.class_id,
             "section_id": assignment.section_id,
             "subject_id": assignment.subject_id,
+            "is_class_teacher": assignment.is_class_teacher,
         },
     )
 
