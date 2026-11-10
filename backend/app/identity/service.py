@@ -18,9 +18,25 @@ from backend.app.core.security import (
     generate_secure_token,
     hash_session_token,
 )
-from backend.app.identity.models import User, Session, PasswordResetToken
+from backend.app.identity.models import User, Session, PasswordResetToken, RoleAssignment, RoleName
 from backend.app.identity.schemas import UserCreateRequest, UserUpdateRequest
 from backend.app.audit.service import record_audit_event
+
+
+def canonicalize_role(raw_role: str) -> str:
+    r = raw_role.lower().strip()
+    if r in ("admin", "school_admin"):
+        return RoleName.SCHOOL_ADMIN
+    if r in ("platform_admin", "superadmin"):
+        return RoleName.PLATFORM_ADMIN
+    if r in ("coordinator", "academic_coordinator"):
+        return RoleName.ACADEMIC_COORDINATOR
+    if r in ("teacher", "faculty"):
+        return RoleName.TEACHER
+    if r in ("student", "pupil"):
+        return RoleName.STUDENT
+    return RoleName.STUDENT
+
 
 
 async def authenticate_user(
